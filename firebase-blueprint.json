@@ -1,0 +1,219 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "RPG Fitness Gamer profile with stats, RPG class, level, and workout streak.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Firebase Auth User ID"
+        },
+        "email": {
+          "type": "string",
+          "description": "User email address"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Character display name or gaming handle"
+        },
+        "characterClass": {
+          "type": "string",
+          "enum": ["Warrior", "Mage", "Assassin"],
+          "description": "The selected RPG character class"
+        },
+        "level": {
+          "type": "integer",
+          "description": "Gamer level (1-100)"
+        },
+        "xp": {
+          "type": "integer",
+          "description": "Current experience points in the active level (0-999)"
+        },
+        "stats": {
+          "type": "object",
+          "description": "RPG stats: STR (Strength), AGI (Agility), END (Endurance), VIT (Vitality)"
+        },
+        "streak": {
+          "type": "integer",
+          "description": "Daily workout streak count"
+        },
+        "lastWorkoutDate": {
+          "type": "string",
+          "description": "ISO date string of the last logged workout (YYYY-MM-DD)"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO timestamp when the character was created"
+        },
+        "badges": {
+          "type": "array",
+          "description": "List of unlocked collectible badges"
+        }
+      },
+      "required": ["uid", "email", "displayName", "characterClass", "level", "xp", "stats", "streak", "createdAt"]
+    },
+    "Workout": {
+      "title": "Workout",
+      "description": "A single logged gym exercise with sets, reps, and XP rewards.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Workout document ID"
+        },
+        "userId": {
+          "type": "string",
+          "description": "Owner userId"
+        },
+        "exerciseName": {
+          "type": "string",
+          "description": "Name of the exercise"
+        },
+        "category": {
+          "type": "string",
+          "enum": ["Strength", "Cardio", "Flexibility", "Endurance"],
+          "description": "Determines which attribute is leveled up"
+        },
+        "sets": {
+          "type": "integer",
+          "description": "Number of sets (0 if duration based)"
+        },
+        "reps": {
+          "type": "integer",
+          "description": "Number of reps per set (0 if duration based)"
+        },
+        "duration": {
+          "type": "integer",
+          "description": "Duration in minutes (0 if sets/reps based)"
+        },
+        "intensity": {
+          "type": "integer",
+          "description": "Scale of 1-5"
+        },
+        "xpGained": {
+          "type": "integer",
+          "description": "XP received"
+        },
+        "loggedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when logged"
+        }
+      },
+      "required": ["id", "userId", "exerciseName", "category", "intensity", "xpGained", "loggedAt"]
+    },
+    "Quest": {
+      "title": "Quest",
+      "description": "Active or completed dynamic RPG quest.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Quest ID"
+        },
+        "userId": {
+          "type": "string",
+          "description": "Associated user"
+        },
+        "title": {
+          "type": "string",
+          "description": "Quest name (e.g., 'Slayer of Weights')"
+        },
+        "description": {
+          "type": "string",
+          "description": "Detailed prompt or flavor text"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["Strength", "Cardio", "Flexibility", "Endurance", "Streak", "Any"],
+          "description": "Quest objective category"
+        },
+        "targetValue": {
+          "type": "integer",
+          "description": "Goal quantity (e.g., 3 workouts, or 60 minutes)"
+        },
+        "currentValue": {
+          "type": "integer",
+          "description": "Progress towards goal"
+        },
+        "completed": {
+          "type": "boolean",
+          "description": "Has quest been claimed"
+        },
+        "xpReward": {
+          "type": "integer",
+          "description": "Bonus XP"
+        },
+        "badgeReward": {
+          "type": "string",
+          "description": "Bonus unlocked badge ID (optional)"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["id", "userId", "title", "description", "type", "targetValue", "currentValue", "completed", "xpReward", "createdAt"]
+    },
+    "Friend": {
+      "title": "Friend",
+      "description": "Linked friend profile cached for leaderboard tracking.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Friendship connection ID"
+        },
+        "userId": {
+          "type": "string",
+          "description": "Current user UID"
+        },
+        "friendUid": {
+          "type": "string",
+          "description": "Friend's Firebase Auth UID"
+        },
+        "friendUsername": {
+          "type": "string",
+          "description": "Friend's display name"
+        },
+        "friendClass": {
+          "type": "string",
+          "description": "Friend's class"
+        },
+        "friendLevel": {
+          "type": "integer",
+          "description": "Friend's current level"
+        },
+        "friendXp": {
+          "type": "integer",
+          "description": "Friend's current XP"
+        },
+        "addedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["id", "userId", "friendUid", "friendUsername", "friendClass", "friendLevel", "addedAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profiles containing level stats, class, and badges."
+    },
+    "/users/{userId}/workouts/{workoutId}": {
+      "schema": "Workout",
+      "description": "Personal exercise log subcollection."
+    },
+    "/users/{userId}/quests/{questId}": {
+      "schema": "Quest",
+      "description": "Assigned fitness quests."
+    },
+    "/users/{userId}/friends/{friendId}": {
+      "schema": "Friend",
+      "description": "User friendship lists for social/friend leaderboards."
+    }
+  }
+}

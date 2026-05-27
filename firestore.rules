@@ -1,0 +1,160 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Primitive Security Helpers
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 64 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // User Validator Helper
+    function isValidUser(data) {
+      return data.uid is string &&
+             data.uid == request.auth.uid &&
+             data.email is string &&
+             data.email.size() <= 128 &&
+             data.displayName is string &&
+             data.displayName.size() <= 64 &&
+             data.characterClass in ['Warrior', 'Mage', 'Assassin'] &&
+             data.level is int &&
+             data.level >= 1 &&
+             data.level <= 100 &&
+             data.xp is int &&
+             data.xp >= 0 &&
+             data.stats is map &&
+             data.stats.STR is int &&
+             data.stats.AGI is int &&
+             data.stats.END is int &&
+             data.stats.VIT is int &&
+             data.streak is int &&
+             data.streak >= 0;
+    }
+
+    // Workout Validator Helper
+    function isValidWorkout(data) {
+      return data.id is string &&
+             data.userId == request.auth.uid &&
+             data.exerciseName is string &&
+             data.exerciseName.size() <= 128 &&
+             data.category in ['Strength', 'Cardio', 'Flexibility', 'Endurance'] &&
+             data.sets is int &&
+             data.sets >= 0 &&
+             data.reps is int &&
+             data.reps >= 0 &&
+             data.duration is int &&
+             data.duration >= 0 &&
+             data.intensity is int &&
+             data.intensity >= 1 &&
+             data.intensity <= 5 &&
+             data.xpGained is int &&
+             data.xpGained >= 0;
+    }
+
+    // Quest Validator Helper
+    function isValidQuest(data) {
+      return data.id is string &&
+             data.userId == request.auth.uid &&
+             data.title is string &&
+             data.title.size() <= 128 &&
+             data.description is string &&
+             data.type in ['Strength', 'Cardio', 'Flexibility', 'Endurance', 'Streak', 'Any'] &&
+             data.targetValue is int &&
+             data.targetValue > 0 &&
+             data.currentValue is int &&
+             data.currentValue >= 0 &&
+             data.completed is bool &&
+             data.xpReward is int &&
+             data.xpReward >= 0;
+    }
+
+    // Friend Validator Helper
+    function isValidFriend(data) {
+      return data.id is string &&
+             data.userId == request.auth.uid &&
+             data.friendUid is string &&
+             data.friendUsername is string &&
+             data.friendClass is string &&
+             data.friendLevel is int;
+    }
+
+    // User Profile Rules
+    match /users/{userId} {
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      
+      allow create: if isOwner(userId) && 
+                       isValidUser(request.resource.data) &&
+                       request.resource.data.createdAt is string &&
+                       request.resource.data.createdAt.size() <= 32 &&
+                       request.resource.data.level == 1 &&
+                       request.resource.data.xp == 0;
+
+      allow update: if isOwner(userId) && 
+                       isValidUser(request.resource.data) &&
+                       request.resource.data.createdAt == resource.data.createdAt &&
+                       request.resource.data.uid == resource.data.uid &&
+                       request.resource.data.email == resource.data.email;
+
+      allow delete: if false; // Profiles are permanent
+
+      // Subcollections
+      match /workouts/{workoutId} {
+        allow get: if isOwner(userId);
+        allow list: if isOwner(userId);
+        
+        allow create: if isOwner(userId) && 
+                         isValidId(workoutId) &&
+                         isValidWorkout(request.resource.data) &&
+                         request.resource.data.loggedAt is string &&
+                         request.resource.data.loggedAt.size() <= 32;
+                         
+        allow update, delete: if false; // Workout history is immutable
+      }
+
+      match /quests/{questId} {
+        allow get: if isOwner(userId);
+        allow list: if isOwner(userId);
+        
+        allow create: if isOwner(userId) && 
+                         isValidId(questId) &&
+                         isValidQuest(request.resource.data) &&
+                         request.resource.data.createdAt is string &&
+                         request.resource.data.createdAt.size() <= 32;
+
+        allow update: if isOwner(userId) && 
+                         isValidQuest(request.resource.data) &&
+                         request.resource.data.createdAt == resource.data.createdAt;
+
+        allow delete: if isOwner(userId);
+      }
+
+      match /friends/{friendId} {
+        allow get, list: if isOwner(userId);
+        
+        allow create: if isOwner(userId) && 
+                         isValidId(friendId) &&
+                         isValidFriend(request.resource.data) &&
+                         request.resource.data.addedAt is string &&
+                         request.resource.data.addedAt.size() <= 32;
+
+        allow update: if isOwner(userId) && 
+                         isValidFriend(request.resource.data);
+
+        allow delete: if isOwner(userId);
+      }
+    }
+  }
+}

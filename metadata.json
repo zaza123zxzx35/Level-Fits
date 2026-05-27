@@ -1,0 +1,6 @@
+{
+  "name": "LevelFit",
+  "description": "An immersive dark fantasy Solo Leveling RPG fitness companion. Slay raid bosses, conquer dungeon gates, trigger the Arise command, extract shadow armies, and awaken S-Rank hunter frames.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
