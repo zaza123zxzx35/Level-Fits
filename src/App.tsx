@@ -13,13 +13,25 @@ import { QuestsView } from "./components/QuestsView";
 import { LeaderboardView } from "./components/LeaderboardView";
 import { ProfileView } from "./components/ProfileView";
 import { AchievementsView } from "./components/AchievementsView";
-import { Home, Dumbbell, Shield, Trophy, User, Sparkles, Flame, LogOut, Loader2, Compass } from "lucide-react";
+import { Home, Dumbbell, Shield, Trophy, User, Sparkles, Flame, LogOut, Loader2, Compass, Volume2, VolumeX } from "lucide-react";
+import { sfx } from "./utils/audio";
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"home" | "workout" | "character" | "leaderboard" | "profile">("home");
   const [charSubTab, setCharSubTab] = useState<"status" | "quests" | "achievements">("status");
+  const [sfxEnabled, setSfxEnabled] = useState(sfx.getEnabled());
+
+  const changeTab = (tab: "home" | "workout" | "character" | "leaderboard" | "profile") => {
+    setActiveTab(tab);
+    sfx.playClick();
+  };
+
+  const changeCharSubTab = (subTab: "status" | "quests" | "achievements") => {
+    setCharSubTab(subTab);
+    sfx.playClick();
+  };
 
   // History states
   const [workoutHistory, setWorkoutHistory] = useState<WorkoutLog[]>([]);
@@ -171,6 +183,9 @@ export default function App() {
         const localProf = localStorage.getItem(`profile_${uid}`);
         if (localProf) {
           const profile = JSON.parse(localProf) as UserProfile;
+          if (profile.statPoints === undefined) {
+            profile.statPoints = 5;
+          }
 
           // Check if user missed a day (skipped training daily system)
           if (profile.lastWorkoutDate) {
@@ -208,6 +223,9 @@ export default function App() {
       const docSnap = await getDoc(docRef);
       if (docSnap.exists()) {
         const profile = docSnap.data() as UserProfile;
+        if (profile.statPoints === undefined) {
+          profile.statPoints = 5;
+        }
 
         // Check if user missed a day (skipped training daily system)
         if (profile.lastWorkoutDate) {
@@ -331,13 +349,17 @@ export default function App() {
       let totalXp = currentUser.xp + workout.xpGained;
       let userLevel = currentUser.level;
       let shouldLevelUpAnim = false;
+      let gainedStatPoints = 0;
 
       // Level limit formula (1000 XP per level)
       while (totalXp >= 1000) {
         totalXp -= 1000;
         userLevel += 1;
         shouldLevelUpAnim = true;
+        gainedStatPoints += 5;
       }
+
+      const finalStatPoints = (currentUser.statPoints || 0) + gainedStatPoints;
 
       // Incremental stat gains based on workout category
       const currentStats = { ...currentUser.stats };
@@ -367,6 +389,7 @@ export default function App() {
           xp: totalXp,
           level: userLevel,
           stats: currentStats,
+          statPoints: finalStatPoints,
           streak: newStreak,
           lastWorkoutDate: todayString,
           shadows: updatedShadows,
@@ -385,6 +408,12 @@ export default function App() {
 
         localStorage.setItem(`profile_${currentUser.uid}`, JSON.stringify(updatedLocalProfile));
         setCurrentUser(updatedLocalProfile);
+
+        if (shouldLevelUpAnim) {
+          try {
+            sfx.playLevelUp();
+          } catch(e){}
+        }
 
         // Process Quest Goals locally
         const updatedLocalQuests = quests.map(quest => {
@@ -430,6 +459,7 @@ export default function App() {
         xp: totalXp,
         level: userLevel,
         stats: currentStats,
+        statPoints: finalStatPoints,
         streak: newStreak,
         lastWorkoutDate: todayString,
         shadows: updatedShadows
@@ -475,6 +505,9 @@ export default function App() {
       if (shouldLevelUpAnim) {
         setLevelUpTarget(userLevel);
         setLevelUpVisible(true);
+        try {
+          sfx.playLevelUp();
+        } catch(e){}
       }
 
       await loadUserProfile(currentUser.uid);
@@ -489,15 +522,23 @@ export default function App() {
   const handleClaimQuest = async (quest: Quest) => {
     if (!currentUser) return;
     try {
+      try {
+        sfx.playQuestComplete();
+      } catch(e){}
+
       let totalXp = currentUser.xp + quest.xpReward;
       let userLevel = currentUser.level;
       let shouldLevelUpAnim = false;
+      let gainedStatPoints = 0;
 
       while (totalXp >= 1000) {
         totalXp -= 1000;
         userLevel += 1;
         shouldLevelUpAnim = true;
+        gainedStatPoints += 5;
       }
+
+      const finalStatPoints = (currentUser.statPoints || 0) + gainedStatPoints;
 
       // Apply stat points bonus upon quest claim
       const currentStats = { ...currentUser.stats };
@@ -515,7 +556,8 @@ export default function App() {
           ...currentUser,
           xp: totalXp,
           level: userLevel,
-          stats: currentStats
+          stats: currentStats,
+          statPoints: finalStatPoints
         };
         localStorage.setItem(`profile_${currentUser.uid}`, JSON.stringify(updatedLocalProfile));
         setCurrentUser(updatedLocalProfile);
@@ -523,6 +565,9 @@ export default function App() {
         if (shouldLevelUpAnim) {
           setLevelUpTarget(userLevel);
           setLevelUpVisible(true);
+          try {
+            sfx.playLevelUp();
+          } catch(e){}
         }
         return;
       }
@@ -540,13 +585,53 @@ export default function App() {
         xp: totalXp,
         level: userLevel,
         stats: currentStats,
+        statPoints: finalStatPoints
       });
 
       if (shouldLevelUpAnim) {
         setLevelUpTarget(userLevel);
         setLevelUpVisible(true);
+        try {
+          sfx.playLevelUp();
+        } catch(e){}
       }
 
+      await loadUserProfile(currentUser.uid);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleAllocateStat = async (stat: "STR" | "AGI" | "END" | "VIT") => {
+    if (!currentUser || !currentUser.statPoints || currentUser.statPoints <= 0) return;
+
+    const updatedStats = {
+      ...currentUser.stats,
+      [stat]: currentUser.stats[stat] + 1
+    };
+    const updatedStatPoints = currentUser.statPoints - 1;
+
+    try {
+      sfx.playStatAlloc();
+    } catch(e){}
+
+    if (currentUser.uid.startsWith("guest_")) {
+      const updatedLocalProfile: UserProfile = {
+        ...currentUser,
+        stats: updatedStats,
+        statPoints: updatedStatPoints
+      };
+      localStorage.setItem(`profile_${currentUser.uid}`, JSON.stringify(updatedLocalProfile));
+      setCurrentUser(updatedLocalProfile);
+      return;
+    }
+
+    try {
+      const userRef = doc(db, "users", currentUser.uid);
+      await updateDoc(userRef, {
+        stats: updatedStats,
+        statPoints: updatedStatPoints
+      });
       await loadUserProfile(currentUser.uid);
     } catch (err) {
       console.error(err);
@@ -657,7 +742,25 @@ export default function App() {
                   </span>
                 </div>
 
-                <div className="flex items-center gap-4 font-mono">
+                <div className="flex items-center gap-3 font-mono">
+                  {/* SFX Audio Toggle */}
+                  <button
+                    onClick={() => {
+                      const state = sfx.toggle();
+                      setSfxEnabled(state);
+                      if (state) sfx.playClick();
+                    }}
+                    className={`p-1.5 rounded-full border transition-all cursor-pointer flex items-center justify-center ${
+                      sfxEnabled 
+                        ? "bg-purple-900/20 border-purple-500/35 text-purple-300 shadow-[0_0_8px_rgba(123,47,190,0.3)] hover:bg-purple-900/40"
+                        : "bg-slate-900 border-slate-800 text-gray-500 hover:text-gray-400"
+                    }`}
+                    title={sfxEnabled ? "System audio: ON" : "System audio: LOCKED"}
+                    style={{ minWidth: "32px", minHeight: "32px" }}
+                  >
+                    {sfxEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+                  </button>
+
                   {/* Streak */}
                   <div className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-900 border border-slate-800 rounded-full text-xs text-amber-500 font-bold">
                     <Flame className="w-4 h-4 text-amber-500 animate-bounce" /> {currentUser.streak}d
@@ -692,7 +795,7 @@ export default function App() {
                     {/* Character sub-tabs */}
                     <div className="grid grid-cols-3 p-1 bg-slate-950/80 border border-slate-800 rounded-xl gap-1">
                       <button
-                        onClick={() => setCharSubTab("status")}
+                        onClick={() => changeCharSubTab("status")}
                         className={`py-2 text-[10px] font-black font-mono uppercase tracking-wider rounded-lg transition-all cursor-pointer text-center ${
                           charSubTab === "status"
                             ? "bg-purple-900/40 border border-purple-500/20 text-yellow-300 shadow"
@@ -703,7 +806,7 @@ export default function App() {
                         Status
                       </button>
                       <button
-                        onClick={() => setCharSubTab("quests")}
+                        onClick={() => changeCharSubTab("quests")}
                         className={`py-2 text-[10px] font-black font-mono uppercase tracking-wider rounded-lg transition-all cursor-pointer text-center ${
                           charSubTab === "quests"
                             ? "bg-purple-900/40 border border-purple-500/20 text-yellow-300 shadow"
@@ -714,7 +817,7 @@ export default function App() {
                         Trials
                       </button>
                       <button
-                        onClick={() => setCharSubTab("achievements")}
+                        onClick={() => changeCharSubTab("achievements")}
                         className={`py-2 text-[10px] font-black font-mono uppercase tracking-wider rounded-lg transition-all cursor-pointer text-center ${
                           charSubTab === "achievements"
                             ? "bg-purple-900/40 border border-purple-500/20 text-yellow-300 shadow"
@@ -731,6 +834,7 @@ export default function App() {
                         currentUser={currentUser} 
                         workoutHistory={workoutHistory} 
                         onRefreshProfile={handleRefreshProfile}
+                        onAllocateStat={handleAllocateStat}
                       />
                     ) : charSubTab === "quests" ? (
                       <QuestsView
@@ -773,7 +877,7 @@ export default function App() {
               {/* Persistent Bottom Mobile Navigation Rail */}
               <nav className="absolute bottom-0 left-0 right-0 h-16 bg-slate-950/95 border-t border-purple-550/15 flex justify-around items-stretch z-30 pb-safe px-2">
                 <button
-                  onClick={() => setActiveTab("home")}
+                  onClick={() => changeTab("home")}
                   className={`flex flex-col items-center justify-center flex-1 cursor-pointer transition-colors ${
                     activeTab === "home" ? "text-yellow-400" : "text-gray-500 hover:text-gray-300"
                   }`}
@@ -784,7 +888,7 @@ export default function App() {
                 </button>
 
                 <button
-                  onClick={() => setActiveTab("workout")}
+                  onClick={() => changeTab("workout")}
                   className={`flex flex-col items-center justify-center flex-1 cursor-pointer transition-colors ${
                     activeTab === "workout" ? "text-yellow-400" : "text-gray-500 hover:text-gray-300"
                   }`}
@@ -795,7 +899,7 @@ export default function App() {
                 </button>
 
                 <button
-                  onClick={() => setActiveTab("character")}
+                  onClick={() => changeTab("character")}
                   className={`flex flex-col items-center justify-center flex-1 cursor-pointer transition-colors ${
                     activeTab === "character" ? "text-yellow-400" : "text-gray-500 hover:text-gray-300"
                   }`}
@@ -806,7 +910,7 @@ export default function App() {
                 </button>
 
                 <button
-                  onClick={() => setActiveTab("leaderboard")}
+                  onClick={() => changeTab("leaderboard")}
                   className={`flex flex-col items-center justify-center flex-1 cursor-pointer transition-colors ${
                     activeTab === "leaderboard" ? "text-yellow-400" : "text-gray-500 hover:text-gray-300"
                   }`}
@@ -817,7 +921,7 @@ export default function App() {
                 </button>
 
                 <button
-                  onClick={() => setActiveTab("profile")}
+                  onClick={() => changeTab("profile")}
                   className={`flex flex-col items-center justify-center flex-1 cursor-pointer transition-colors ${
                     activeTab === "profile" ? "text-yellow-400" : "text-gray-500 hover:text-gray-300"
                   }`}

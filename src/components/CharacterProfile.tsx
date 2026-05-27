@@ -26,6 +26,7 @@ interface CharacterProfileProps {
   currentUser: UserProfile;
   workoutHistory: WorkoutLog[];
   onRefreshProfile?: () => Promise<void>;
+  onAllocateStat?: (stat: "STR" | "AGI" | "END" | "VIT") => void;
 }
 
 interface ShadowSoldier {
@@ -104,7 +105,7 @@ const SHADOWS_DECK: ShadowSoldier[] = [
   }
 ];
 
-export function CharacterProfile({ currentUser, workoutHistory, onRefreshProfile }: CharacterProfileProps) {
+export function CharacterProfile({ currentUser, workoutHistory, onRefreshProfile, onAllocateStat }: CharacterProfileProps) {
   const [subTab, setSubTab] = useState<"attributes" | "shadows">("attributes");
   const [speakerText, setSpeakerText] = useState<string | null>(null);
   const [ariseSimulating, setAriseSimulating] = useState(false);
@@ -423,24 +424,55 @@ export function CharacterProfile({ currentUser, workoutHistory, onRefreshProfile
         <>
           {/* Stats Meter list card */}
           <div className="p-6 bg-[#0B0F1A]/95 border border-[#00C8FF]/15 rounded-2xl shadow-xl space-y-5 relative">
-            <h4 className="text-sm font-black text-[#00C8FF] uppercase font-mono tracking-widest flex items-center gap-1.5">
-              <Zap className="w-4 h-4 text-[#00C8FF]" /> Holographic Attributes Panel
-            </h4>
+            <div className="flex justify-between items-center">
+              <h4 className="text-sm font-black text-[#00C8FF] uppercase font-mono tracking-widest flex items-center gap-1.5">
+                <Zap className="w-4 h-4 text-[#00C8FF]" /> Holographic Attributes Panel
+              </h4>
+              {currentUser.statPoints && currentUser.statPoints > 0 ? (
+                <span className="text-[10px] font-mono text-green-400 bg-green-950/60 px-2 py-0.5 border border-green-500/30 rounded-full font-black uppercase tracking-widest animate-pulse">
+                  {currentUser.statPoints} STAT POINTS AVAILABLE
+                </span>
+              ) : null}
+            </div>
+
+            {currentUser.statPoints && currentUser.statPoints > 0 ? (
+              <div className="p-3 bg-gradient-to-r from-green-950/40 to-[#0A1E14] border border-green-500/30 rounded-xl text-left space-y-1 animate-[flicker_1.5s_infinite]">
+                <div className="text-[10px] font-black font-mono text-green-400 uppercase tracking-widest flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-ping mr-1" />
+                  [SYSTEM AWAKENING: ATTR_RESTORE]
+                </div>
+                <p className="text-[10.5px] font-sans text-green-100">
+                  You have <b>{currentUser.statPoints} unallocated points</b> from the Monarch's blessing. Distribute them below to permanently maximize your physical attributes.
+                </p>
+              </div>
+            ) : null}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* STR */}
-              <div className={`p-3 bg-slate-950/60 rounded-xl border ${increasedStats.STR ? "border-green-500 shadow-[0_0_12px_rgba(34,197,94,0.3)] animate-pulse" : "border-rose-500/20"} flex flex-col justify-between transition-all duration-500`}>
+              <div className={`p-3 bg-slate-950/60 rounded-xl border ${increasedStats.STR ? "border-green-500 shadow-[0_0_12px_rgba(34,197,94,0.3)] animate-pulse" : "border-rose-500/20"} flex flex-col justify-between transition-all duration-500 hover:border-rose-500/45`}>
                 <div className="flex justify-between items-center mb-1">
                   <span className="text-white text-xs font-black font-mono flex items-center gap-1.5 uppercase">
                     <Sword className="w-4 h-4 text-rose-500" /> STR (Strength)
                   </span>
-                  <div className="flex items-center gap-1.5">
-                    {increasedStats.STR && (
-                      <span className="text-green-400 font-extrabold text-[10px] animate-bounce flex items-center gap-0.5 font-mono">
-                        ▲ UP
-                      </span>
-                    )}
-                    <span className="text-rose-400 font-mono font-black text-sm">{currentUser.stats.STR}</span>
+                  <div className="flex items-center gap-2">
+                    {onAllocateStat && currentUser.statPoints && currentUser.statPoints > 0 ? (
+                      <button
+                        onClick={() => onAllocateStat("STR")}
+                        className="px-2 py-0.5 bg-green-600 hover:bg-green-500 active:scale-95 text-white font-mono font-black text-xs rounded border border-green-400/40 shadow-[0_0_8px_rgba(34,197,94,0.4)] transition-all cursor-pointer flex items-center justify-center font-bold"
+                        title="Add 1 Strength point"
+                        style={{ minWidth: "24px", minHeight: "24px" }}
+                      >
+                        +
+                      </button>
+                    ) : null}
+                    <div className="flex items-center gap-1">
+                      {increasedStats.STR && (
+                        <span className="text-green-400 font-extrabold text-[10px] animate-bounce flex items-center gap-0.5 font-mono">
+                          ▲ UP
+                        </span>
+                      )}
+                      <span className="text-rose-400 font-mono font-black text-sm">{currentUser.stats.STR}</span>
+                    </div>
                   </div>
                 </div>
                 <div className="h-1.5 w-full bg-slate-900 rounded-full overflow-hidden mt-1.5">
@@ -452,18 +484,30 @@ export function CharacterProfile({ currentUser, workoutHistory, onRefreshProfile
               </div>
 
               {/* AGI */}
-              <div className={`p-3 bg-slate-950/60 rounded-xl border ${increasedStats.AGI ? "border-green-500 shadow-[0_0_12px_rgba(34,197,94,0.3)] animate-pulse" : "border-cyan-500/20"} flex flex-col justify-between transition-all duration-500`}>
+              <div className={`p-3 bg-slate-950/60 rounded-xl border ${increasedStats.AGI ? "border-green-500 shadow-[0_0_12px_rgba(34,197,94,0.3)] animate-pulse" : "border-cyan-500/20"} flex flex-col justify-between transition-all duration-500 hover:border-cyan-500/45`}>
                 <div className="flex justify-between items-center mb-1">
                   <span className="text-white text-xs font-black font-mono flex items-center gap-1.5 uppercase">
                     <Compass className="w-4 h-4 text-blue-400" /> AGI (Agility)
                   </span>
-                  <div className="flex items-center gap-1.5">
-                    {increasedStats.AGI && (
-                      <span className="text-green-400 font-extrabold text-[10px] animate-bounce flex items-center gap-0.5 font-mono">
-                        ▲ UP
-                      </span>
-                    )}
-                    <span className="text-[#00C8FF] font-mono font-black text-sm">{currentUser.stats.AGI}</span>
+                  <div className="flex items-center gap-2">
+                    {onAllocateStat && currentUser.statPoints && currentUser.statPoints > 0 ? (
+                      <button
+                        onClick={() => onAllocateStat("AGI")}
+                        className="px-2 py-0.5 bg-green-600 hover:bg-green-500 active:scale-95 text-white font-mono font-black text-xs rounded border border-green-400/40 shadow-[0_0_8px_rgba(34,197,94,0.4)] transition-all cursor-pointer flex items-center justify-center font-bold"
+                        title="Add 1 Agility point"
+                        style={{ minWidth: "24px", minHeight: "24px" }}
+                      >
+                        +
+                      </button>
+                    ) : null}
+                    <div className="flex items-center gap-1">
+                      {increasedStats.AGI && (
+                        <span className="text-green-400 font-extrabold text-[10px] animate-bounce flex items-center gap-0.5 font-mono">
+                          ▲ UP
+                        </span>
+                      )}
+                      <span className="text-[#00C8FF] font-mono font-black text-sm">{currentUser.stats.AGI}</span>
+                    </div>
                   </div>
                 </div>
                 <div className="h-1.5 w-full bg-slate-900 rounded-full overflow-hidden mt-1.5">
@@ -475,18 +519,30 @@ export function CharacterProfile({ currentUser, workoutHistory, onRefreshProfile
               </div>
 
               {/* END */}
-              <div className={`p-3 bg-slate-950/60 rounded-xl border ${increasedStats.END ? "border-green-500 shadow-[0_0_12px_rgba(34,197,94,0.3)] animate-pulse" : "border-amber-500/20"} flex flex-col justify-between transition-all duration-500`}>
+              <div className={`p-3 bg-slate-950/60 rounded-xl border ${increasedStats.END ? "border-green-500 shadow-[0_0_12px_rgba(34,197,94,0.3)] animate-pulse" : "border-amber-500/20"} flex flex-col justify-between transition-all duration-500 hover:border-amber-500/45`}>
                 <div className="flex justify-between items-center mb-1">
                   <span className="text-white text-xs font-black font-mono flex items-center gap-1.5 uppercase">
                     <Shield className="w-4 h-4 text-amber-500" /> END (Endurance)
                   </span>
-                  <div className="flex items-center gap-1.5">
-                    {increasedStats.END && (
-                      <span className="text-green-400 font-extrabold text-[10px] animate-bounce flex items-center gap-0.5 font-mono">
-                        ▲ UP
-                      </span>
-                    )}
-                    <span className="text-amber-500 font-mono font-black text-sm">{currentUser.stats.END}</span>
+                  <div className="flex items-center gap-2">
+                    {onAllocateStat && currentUser.statPoints && currentUser.statPoints > 0 ? (
+                      <button
+                        onClick={() => onAllocateStat("END")}
+                        className="px-2 py-0.5 bg-green-600 hover:bg-green-500 active:scale-95 text-white font-mono font-black text-xs rounded border border-green-400/40 shadow-[0_0_8px_rgba(34,197,94,0.4)] transition-all cursor-pointer flex items-center justify-center font-bold"
+                        title="Add 1 Endurance point"
+                        style={{ minWidth: "24px", minHeight: "24px" }}
+                      >
+                        +
+                      </button>
+                    ) : null}
+                    <div className="flex items-center gap-1">
+                      {increasedStats.END && (
+                        <span className="text-green-400 font-extrabold text-[10px] animate-bounce flex items-center gap-0.5 font-mono">
+                          ▲ UP
+                        </span>
+                      )}
+                      <span className="text-amber-500 font-mono font-black text-sm">{currentUser.stats.END}</span>
+                    </div>
                   </div>
                 </div>
                 <div className="h-1.5 w-full bg-slate-900 rounded-full overflow-hidden mt-1.5">
@@ -498,18 +554,30 @@ export function CharacterProfile({ currentUser, workoutHistory, onRefreshProfile
               </div>
 
               {/* VIT */}
-              <div className={`p-3 bg-slate-950/60 rounded-xl border ${increasedStats.VIT ? "border-green-500 shadow-[0_0_12px_rgba(34,197,94,0.3)] animate-pulse" : "border-purple-500/20"} flex flex-col justify-between transition-all duration-500`}>
+              <div className={`p-3 bg-slate-950/60 rounded-xl border ${increasedStats.VIT ? "border-green-500 shadow-[0_0_12px_rgba(34,197,94,0.3)] animate-pulse" : "border-purple-500/20"} flex flex-col justify-between transition-all duration-500 hover:border-purple-500/45`}>
                 <div className="flex justify-between items-center mb-1">
                   <span className="text-white text-xs font-black font-mono flex items-center gap-1.5 uppercase">
                     <Heart className="w-4 h-4 text-purple-400" /> VIT (Vitality)
                   </span>
-                  <div className="flex items-center gap-1.5">
-                    {increasedStats.VIT && (
-                      <span className="text-green-400 font-extrabold text-[10px] animate-bounce flex items-center gap-0.5 font-mono">
-                        ▲ UP
-                      </span>
-                    )}
-                    <span className="text-purple-400 font-mono font-black text-sm">{currentUser.stats.VIT}</span>
+                  <div className="flex items-center gap-2">
+                    {onAllocateStat && currentUser.statPoints && currentUser.statPoints > 0 ? (
+                      <button
+                        onClick={() => onAllocateStat("VIT")}
+                        className="px-2 py-0.5 bg-green-600 hover:bg-green-500 active:scale-95 text-white font-mono font-black text-xs rounded border border-green-400/40 shadow-[0_0_8px_rgba(34,197,94,0.4)] transition-all cursor-pointer flex items-center justify-center font-bold"
+                        title="Add 1 Vitality point"
+                        style={{ minWidth: "24px", minHeight: "24px" }}
+                      >
+                        +
+                      </button>
+                    ) : null}
+                    <div className="flex items-center gap-1">
+                      {increasedStats.VIT && (
+                        <span className="text-green-400 font-extrabold text-[10px] animate-bounce flex items-center gap-0.5 font-mono">
+                          ▲ UP
+                        </span>
+                      )}
+                      <span className="text-purple-400 font-mono font-black text-sm">{currentUser.stats.VIT}</span>
+                    </div>
                   </div>
                 </div>
                 <div className="h-1.5 w-full bg-slate-900 rounded-full overflow-hidden mt-1.5">

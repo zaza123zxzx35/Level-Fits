@@ -25,6 +25,7 @@ export interface UserProfile {
   debuffReason?: string;
   punishmentQuestActive?: boolean;
   punishmentQuestProgress?: number; // Out of 100 reps
+  statPoints?: number; // Unallocated stat points rewarded during Level Up!
 
 }
 
