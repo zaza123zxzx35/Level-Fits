@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Plus, Dumbbell, Zap, Flame, Heart, Sparkles, Smile } from "lucide-react";
-import { WorkoutCategory } from "../types";
+import { WorkoutCategory, WorkoutLog } from "../types";
 import { motion, AnimatePresence } from "motion/react";
 
 interface WorkoutLoggerProps {
@@ -14,6 +14,7 @@ interface WorkoutLoggerProps {
     xpGained: number;
   }) => Promise<void>;
   isLogging: boolean;
+  workoutHistory?: WorkoutLog[];
 }
 
 const CATEGORIES: { name: WorkoutCategory; icon: any; color: string; desc: string; stat: string }[] = [
@@ -23,7 +24,7 @@ const CATEGORIES: { name: WorkoutCategory; icon: any; color: string; desc: strin
   { name: "Endurance", icon: Zap, color: "from-indigo-600 to-purple-600", desc: "Boosts VIT (Vitality) + END (Endurance)", stat: "VIT" },
 ];
 
-export function WorkoutLogger({ onLogWorkout, isLogging }: WorkoutLoggerProps) {
+export function WorkoutLogger({ onLogWorkout, isLogging, workoutHistory = [] }: WorkoutLoggerProps) {
   const [exerciseName, setExerciseName] = useState("");
   const [category, setCategory] = useState<WorkoutCategory>("Strength");
   const [sets, setSets] = useState(3);
@@ -31,6 +32,7 @@ export function WorkoutLogger({ onLogWorkout, isLogging }: WorkoutLoggerProps) {
   const [duration, setDuration] = useState(30); // minutes
   const [intensity, setIntensity] = useState(3); // 1-5
   const [successXp, setSuccessXp] = useState<number | null>(null);
+  const [floatingTexts, setFloatingTexts] = useState<{ id: number; text: string; x: number; y: number }[]>([]);
 
   const calculateXp = (): number => {
     if (category === "Strength") {
@@ -58,6 +60,19 @@ export function WorkoutLogger({ onLogWorkout, isLogging }: WorkoutLoggerProps) {
       xpGained,
     };
 
+    // Trigger floating damage text effect
+    const floaterIndex = Date.now();
+    const newFloater = {
+      id: floaterIndex,
+      text: `+${xpGained} XP`,
+      x: Math.floor(Math.random() * 80) - 40,
+      y: Math.floor(Math.random() * 45) - 10,
+    };
+    setFloatingTexts(prev => [...prev, newFloater]);
+    setTimeout(() => {
+      setFloatingTexts(prev => prev.filter(f => f.id !== floaterIndex));
+    }, 2000);
+
     await onLogWorkout(workoutPayload);
 
     // Show temporary XP gains feedback
@@ -70,32 +85,86 @@ export function WorkoutLogger({ onLogWorkout, isLogging }: WorkoutLoggerProps) {
     setExerciseName("");
   };
 
+  const weeklyMinuteGoal = 150;
+  
+  // Calculate total minutes this week
+  const getWeeklyMinutes = () => {
+    const now = new Date();
+    const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    return (workoutHistory || [])
+      .filter(w => new Date(w.loggedAt).getTime() >= oneWeekAgo.getTime())
+      .reduce((sum, w) => {
+        // If duration is logged, use it, else default to 15 mins
+        const minutes = w.duration > 0 ? w.duration : (w.sets * w.reps * 0.1 || 15);
+        return sum + minutes;
+      }, 0);
+  };
+
+  const minutesLogged = getWeeklyMinutes();
+  const rawBossHpPercent = Math.max(0, 100 - (minutesLogged / weeklyMinuteGoal) * 100);
+  const bossHpPercent = Math.round(rawBossHpPercent);
+
   return (
-    <div className="p-6 bg-slate-900/90 border border-purple-550/30 rounded-2xl shadow-xl shadow-black relative overflow-hidden">
-      {/* Background radial highlight */}
-      <div className="absolute top-0 right-0 w-32 h-32 bg-purple-600/10 rounded-full blur-2xl pointer-events-none" />
+    <div className="space-y-4">
+      {/* Boss HP Bar representing weekly progress */}
+      <div className="p-4 bg-[#090b11]/85 border border-red-500/35 rounded-2xl space-y-2 relative overflow-hidden shadow-xl">
+        {/* Subtle background red pulse */}
+        <div className="absolute inset-0 bg-red-600/5 animate-[pulseRed_2.5s_ease-in-out_infinite] pointer-events-none" />
 
-      <h2 className="text-2xl font-bold font-sans text-yellow-400 flex items-center gap-2 mb-1.5 uppercase tracking-wide">
-        <Dumbbell className="w-6 h-6 animate-bounce" /> Log Exercise Ritual
-      </h2>
-      <p className="text-gray-400 text-xs mb-6 font-mono uppercase tracking-wider">
-        Transform physical fatigue into infinite power points.
-      </p>
+        <div className="flex justify-between items-center text-[10px] font-mono font-black relative z-10">
+          <div className="flex items-center gap-1.5 text-red-500">
+            <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-ping" />
+            <span className="uppercase tracking-wider">WEEKLY ENCOUNTER: REYNOLD, THE BEAST MONARCH</span>
+          </div>
+          <span className="text-gray-500 uppercase text-[8px] bg-red-950/40 px-1 border border-red-900/30">MAX_RAID</span>
+        </div>
 
-      {/* Floating Gain Alert popups inside layout */}
-      <AnimatePresence>
-        {successXp !== null && (
-          <motion.div
-            initial={{ scale: 0.5, y: -20, opacity: 0 }}
-            animate={{ scale: 1, y: 0, opacity: 1 }}
-            exit={{ scale: 0.8, y: -40, opacity: 0 }}
-            className="absolute top-4 right-4 z-40 bg-gradient-to-r from-yellow-500 to-amber-600 text-slate-950 font-black text-xs uppercase px-4 py-2.5 rounded-xl flex items-center gap-2 border border-yellow-300 shadow-lg shadow-yellow-500/20"
-          >
-            <Sparkles className="w-4 h-4 text-slate-950 animate-spin" />
-            XP Gained: +{successXp} XP!
-          </motion.div>
-        )}
-      </AnimatePresence>
+        <div className="flex justify-between items-baseline font-mono text-[9px] font-black text-red-400/90 relative z-10">
+          <span>Boss Hp Level: {bossHpPercent}%</span>
+          <span className="text-red-400 font-extrabold">{Math.max(0, weeklyMinuteGoal - Math.round(minutesLogged))} / {weeklyMinuteGoal} HP Mins</span>
+        </div>
+
+        {/* HP Red Bar Slider */}
+        <div className="h-2.5 w-full bg-slate-950 border border-red-950 rounded relative overflow-hidden shadow-inner z-10">
+          <div 
+            className="h-full bg-gradient-to-r from-red-850 via-rose-600 to-red-500 transition-all duration-700 ease-in-out"
+            style={{ width: `${bossHpPercent}%` }}
+          />
+          <div className="absolute inset-0 bg-[linear-gradient(rgba(18,10,10,0.1)_50%,_rgba(0,0,0,0.35)_50%)] bg-[length:100%_4px] pointer-events-none" />
+        </div>
+
+        <p className="text-[8.5px] text-gray-500 font-mono italic text-right mt-1 relative z-10">
+          {bossHpPercent <= 0 
+            ? "👑 THRESHOLD CLEAR: Beast Monarch defeated. S-RANK loot is yours." 
+            : "⚔️ Burn physical calories to apply massive impact points to the monarch."}
+        </p>
+      </div>
+
+      <div className="p-6 bg-slate-900/90 border border-purple-550/30 rounded-2xl shadow-xl shadow-black relative overflow-hidden pb-10">
+        {/* Background radial highlight */}
+        <div className="absolute top-0 right-0 w-32 h-32 bg-purple-600/10 rounded-full blur-2xl pointer-events-none" />
+
+        <h2 className="text-2xl font-bold font-sans text-yellow-400 flex items-center gap-2 mb-1.5 uppercase tracking-wide">
+          <Dumbbell className="w-6 h-6 animate-bounce" /> Log Exercise Ritual
+        </h2>
+        <p className="text-gray-400 text-xs mb-6 font-mono uppercase tracking-wider">
+          Transform physical fatigue into infinite power points.
+        </p>
+
+        {/* Floating Gain Alert popups inside layout */}
+        <AnimatePresence>
+          {successXp !== null && (
+            <motion.div
+              initial={{ scale: 0.5, y: -20, opacity: 0 }}
+              animate={{ scale: 1, y: 0, opacity: 1 }}
+              exit={{ scale: 0.8, y: -40, opacity: 0 }}
+              className="absolute top-4 right-4 z-40 bg-gradient-to-r from-yellow-500 to-amber-600 text-slate-950 font-black text-xs uppercase px-4 py-2.5 rounded-xl flex items-center gap-2 border border-yellow-300 shadow-lg shadow-yellow-500/20"
+            >
+              <Sparkles className="w-4 h-4 text-slate-950 animate-spin" />
+              XP Gained: +{successXp} XP!
+            </motion.div>
+          )}
+        </AnimatePresence>
 
       <form onSubmit={handleSubmit} className="space-y-5">
         {/* Category Icons Selector */}
@@ -281,6 +350,35 @@ export function WorkoutLogger({ onLogWorkout, isLogging }: WorkoutLoggerProps) {
           )}
         </button>
       </form>
+
+      {/* Floating XP Damage numbers popup overlays */}
+      {floatingTexts.map(floater => (
+        <span
+          key={floater.id}
+          className="absolute z-50 text-[#00D4FF] font-black text-2xl tracking-widest pointer-events-none select-none drop-shadow-[0_0_12px_rgba(0,212,255,0.95)] filter animate-[floatDmg_1.4s_cubic-bezier(0.18,0.89,0.32,1.28)_forwards]"
+          style={{
+            top: `55%`,
+            left: `calc(50% + ${floater.x}px)`,
+            marginTop: `${floater.y}px`,
+          }}
+        >
+          {floater.text}
+        </span>
+      ))}
     </div>
+
+    {/* CSS Keyframes styles */}
+    <style>{`
+      @keyframes floatDmg {
+        0% { transform: translateY(0px) scale(0.6); opacity: 0; }
+        15% { transform: translateY(-20px) scale(1.3); opacity: 1; }
+        100% { transform: translateY(-130px) scale(1.65); opacity: 0; }
+      }
+      @keyframes pulseRed {
+        0%, 100% { opacity: 0.25; }
+        50% { opacity: 0.65; }
+      }
+    `}</style>
+  </div>
   );
 }

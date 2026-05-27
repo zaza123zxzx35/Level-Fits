@@ -3,6 +3,7 @@ import { collection, query, orderBy, limit, getDocs, where, addDoc, doc, serverT
 import { db, handleFirestoreError, OperationType } from "../firebase";
 import { UserProfile, FriendRelation, CharacterClass } from "../types";
 import { Trophy, Users, ShieldAlert, Award, ChevronRight, UserPlus, Trash2, ShieldCheck, Flame } from "lucide-react";
+import { getHunterRank } from "../utils/rankUtils";
 
 interface LeaderboardViewProps {
   currentUser: UserProfile;
@@ -463,28 +464,57 @@ export function LeaderboardView({ currentUser }: LeaderboardViewProps) {
 
         {/* Global tab render */}
         {!loading && activeTab === "global" && (
-          <div className="flex flex-col">
+          <div className="flex flex-col font-mono">
             {globalLeaders.map((leader, index) => {
               const matchesUser = leader.uid === currentUser.uid;
               const rank = index + 1;
+              const hunterRank = getHunterRank(leader.level);
+              
+              // Rank specific color glows
+              let rowColorClass = "border-b border-slate-900/40";
+              if (hunterRank === "S") {
+                rowColorClass += " bg-yellow-950/5 border-l-2 border-l-yellow-500/80 shadow-[inset_4px_0_12px_rgba(234,179,8,0.06)]";
+              } else if (hunterRank === "A") {
+                rowColorClass += " bg-purple-950/5 border-l-2 border-l-purple-500/80 shadow-[inset_4px_0_12px_rgba(147,51,234,0.06)]";
+              } else if (hunterRank === "B") {
+                rowColorClass += " bg-blue-950/5 border-l-2 border-l-blue-500/80 shadow-[inset_4px_0_12px_rgba(59,130,246,0.06)]";
+              } else if (hunterRank === "C") {
+                rowColorClass += " bg-green-950/5 border-l-2 border-l-green-500/80 shadow-[inset_4px_0_12px_rgba(34,197,94,0.06)]";
+              }
+
               return (
                 <div
                   key={leader.uid}
-                  className={`flex items-center justify-between p-4 ${
+                  className={`flex items-center justify-between p-4 transition-all duration-300 ${rowColorClass} ${
                     matchesUser ? "bg-purple-950/20 shadow-inner" : ""
                   }`}
                 >
                   <div className="flex items-center gap-4">
-                    {/* Rank Badge */}
-                    <div className="w-12 text-left font-mono font-black text-xs">
+                    {/* Rank Badge with Crown SVG for 1st, 2nd, 3rd */}
+                    <div className="w-12 text-left font-mono font-black text-xs flex items-center justify-start shrink-0">
                       {rank === 1 ? (
-                        <span className="text-yellow-400 font-extrabold pb-0.5">[1ST]</span>
+                        <div className="flex items-center gap-1">
+                          <svg className="w-4 h-4 text-yellow-405 drop-shadow-[0_0_6px_#facc15] shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7zm3 14h14v2H5v-2z" />
+                          </svg>
+                          <span className="text-yellow-400 font-extrabold text-[10px]">1ST</span>
+                        </div>
                       ) : rank === 2 ? (
-                        <span className="text-slate-400 font-extrabold pb-0.5">[2ND]</span>
+                        <div className="flex items-center gap-1">
+                          <svg className="w-4 h-4 text-slate-305 drop-shadow-[0_0_5px_#cbd5e1] shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7zm3 14h14v2H5v-2z" />
+                          </svg>
+                          <span className="text-slate-300 font-extrabold text-[10px]">2ND</span>
+                        </div>
                       ) : rank === 3 ? (
-                        <span className="text-amber-600 font-extrabold pb-0.5">[3RD]</span>
+                        <div className="flex items-center gap-1">
+                          <svg className="w-4 h-4 text-amber-605 drop-shadow-[0_0_4px_#d97706] shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7zm3 14h14v2H5v-2z" />
+                          </svg>
+                          <span className="text-amber-600 font-extrabold text-[10px]">3RD</span>
+                        </div>
                       ) : (
-                        <span className="text-gray-500">[{rank}TH]</span>
+                        <span className="text-gray-500 pl-1">[{rank}TH]</span>
                       )}
                     </div>
 
@@ -498,6 +528,9 @@ export function LeaderboardView({ currentUser }: LeaderboardViewProps) {
                             YOU
                           </span>
                         )}
+                        <span className="text-[8.5px] uppercase font-bold text-gray-500 tracking-widest font-mono">
+                          [{hunterRank}-Rank]
+                        </span>
                       </div>
                       <span className="text-[10px] text-gray-400 font-mono uppercase tracking-wider">
                         {leader.characterClass}
@@ -521,59 +554,95 @@ export function LeaderboardView({ currentUser }: LeaderboardViewProps) {
 
         {/* Friends tab render */}
         {!loading && activeTab === "friends" && (
-          <div className="flex flex-col">
+          <div className="flex flex-col font-mono">
             {/* Inject current user first for friend leaderboard layout */}
-            <div className="flex items-center justify-between p-4 bg-purple-950/25 border-b border-purple-900/40">
-              <div className="flex items-center gap-4">
-                <div className="w-6 text-center font-mono font-bold text-xs text-yellow-500">
-                  ★
-                </div>
-                <div>
-                  <div className="flex items-center gap-1.5">
-                    <span className="font-bold text-sm text-yellow-300">{currentUser.displayName}</span>
-                    <span className="text-[9px] bg-yellow-400/25 text-yellow-300 px-1 rounded font-mono">OWNER</span>
+            {(() => {
+              const userHunterRank = getHunterRank(currentUser.level);
+              let userGlowClass = "bg-purple-950/25 border-b border-purple-900/45";
+              if (userHunterRank === "S") {
+                userGlowClass += " border-l-2 border-l-yellow-500/80";
+              } else if (userHunterRank === "A") {
+                userGlowClass += " border-l-2 border-l-purple-500/80";
+              } else if (userHunterRank === "B") {
+                userGlowClass += " border-l-2 border-l-blue-500/80";
+              } else if (userHunterRank === "C") {
+                userGlowClass += " border-l-2 border-l-green-500/80";
+              }
+              return (
+                <div className={`flex items-center justify-between p-4 ${userGlowClass}`}>
+                  <div className="flex items-center gap-4">
+                    <div className="w-6 text-center font-mono font-bold text-xs text-yellow-500 flex items-center justify-center shrink-0">
+                      <svg className="w-4 h-4 text-yellow-400 drop-shadow-[0_0_4px_rgba(234,179,8,0.7)]" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-bold text-sm text-yellow-300">{currentUser.displayName}</span>
+                        <span className="text-[9px] bg-yellow-400/25 text-yellow-300 px-1 rounded font-mono font-bold">OWNER</span>
+                      </div>
+                      <span className="text-[10px] text-gray-400 font-mono uppercase tracking-wider block">
+                        {currentUser.characterClass}
+                      </span>
+                    </div>
                   </div>
-                  <span className="text-[10px] text-gray-400 font-mono uppercase tracking-wider">
-                    {currentUser.characterClass}
-                  </span>
-                </div>
-              </div>
-              <div className="text-right font-mono">
-                <div className="text-yellow-400 text-sm font-black">Lv. {currentUser.level}</div>
-                <div className="text-gray-500 text-[10px]">{currentUser.xp} XP</div>
-              </div>
-            </div>
-
-            {friendsList.map((friend) => (
-              <div key={friend.id} className="flex items-center justify-between p-4">
-                <div className="flex items-center gap-4">
-                  <div className="w-6 text-center">
-                    <ShieldCheck className="w-4 h-4 text-emerald-400 mx-auto" />
-                  </div>
-                  <div>
-                    <span className="font-bold text-sm text-white">{friend.friendUsername}</span>
-                    <span className="text-[10px] text-gray-500 font-mono uppercase tracking-wider block">
-                      {friend.friendClass}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3">
                   <div className="text-right font-mono">
-                    <div className="text-yellow-400 text-sm font-black">Lv. {friend.friendLevel}</div>
-                    <div className="text-gray-500 text-[10px]">{friend.friendXp} XP</div>
+                    <div className="text-yellow-400 text-sm font-black">Lv. {currentUser.level}</div>
+                    <div className="text-gray-500 text-[10px]">{currentUser.xp} XP</div>
                   </div>
-                  <button
-                    onClick={() => handleRemoveFriend(friend.friendUid)}
-                    title="Dismiss Ally"
-                    className="p-2 text-slate-800 hover:text-red-500 hover:bg-red-950/30 rounded-lg transition-all cursor-pointer"
-                    style={{ minWidth: "44px", minHeight: "44px" }}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
                 </div>
-              </div>
-            ))}
+              );
+            })()}
+
+            {friendsList.map((friend) => {
+              const friendRank = getHunterRank(friend.friendLevel);
+              let friendGlowClass = "border-b border-slate-900/40";
+              if (friendRank === "S") {
+                friendGlowClass += " bg-yellow-950/5 border-l-2 border-l-yellow-500/80 shadow-[inset_4px_0_12px_rgba(234,179,8,0.06)]";
+              } else if (friendRank === "A") {
+                friendGlowClass += " bg-purple-950/5 border-l-2 border-l-purple-500/80 shadow-[inset_4px_0_12px_rgba(147,51,234,0.06)]";
+              } else if (friendRank === "B") {
+                friendGlowClass += " bg-blue-950/5 border-l-2 border-l-blue-500/80 shadow-[inset_4px_0_12px_rgba(59,130,246,0.06)]";
+              } else if (friendRank === "C") {
+                friendGlowClass += " bg-green-950/5 border-l-2 border-l-green-500/80 shadow-[inset_4px_0_12px_rgba(34,197,94,0.06)]";
+              }
+
+              return (
+                <div key={friend.id} className={`flex items-center justify-between p-4 transition-all duration-300 ${friendGlowClass}`}>
+                  <div className="flex items-center gap-4">
+                    <div className="w-6 text-center flex items-center justify-center shrink-0">
+                      <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-bold text-sm text-white">{friend.friendUsername}</span>
+                        <span className="text-[8.5px] uppercase font-bold text-gray-500 tracking-widest font-mono">
+                          [{friendRank}-Rank]
+                        </span>
+                      </div>
+                      <span className="text-[10px] text-gray-400 font-mono uppercase tracking-wider block">
+                        {friend.friendClass}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <div className="text-right font-mono">
+                      <div className="text-yellow-400 text-sm font-black">Lv. {friend.friendLevel}</div>
+                      <div className="text-gray-500 text-[10px]">{friend.friendXp} XP</div>
+                    </div>
+                    <button
+                      onClick={() => handleRemoveFriend(friend.friendUid)}
+                      title="Dismiss Ally"
+                      className="p-2 text-slate-800 hover:text-red-500 hover:bg-red-950/30 rounded-lg transition-all cursor-pointer"
+                      style={{ minWidth: "44px", minHeight: "44px" }}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>

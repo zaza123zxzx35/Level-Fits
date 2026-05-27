@@ -286,6 +286,19 @@ export function HomeOverview({ currentUser, workoutHistory, quests, onNavigateTo
   return (
     <div className="space-y-6">
       
+      {/* SYSTEM HEADER with blinking cursor */}
+      <div className="flex items-center justify-between border-b border-[#00D4FF]/30 pb-3 font-mono">
+        <div className="flex items-center gap-2">
+          <div className="w-2 h-2 rounded-full bg-[#00D4FF] animate-ping" />
+          <h2 className="text-xs font-black text-[#00D4FF] tracking-widest uppercase flex items-center">
+            ACTIVE SYSTEM INTERFACE<span className="animate-[blink_1.1s_steps(2,start)_infinite] ml-1 bg-[#00D4FF] text-transparent select-none inline-block w-1.5 h-3.5 align-middle">|</span>
+          </h2>
+        </div>
+        <span className="text-[9px] text-[#7B2FBE] font-bold tracking-widest uppercase bg-purple-950/40 px-2 py-0.5 border border-[#7B2FBE]/20 rounded h-5 flex items-center">
+          HUNTER_LINK: ONLINE
+        </span>
+      </div>
+
       {/* level character gauge block */}
       <div className={`p-6 bg-gradient-to-r ${rankStyle.skinClass} border-2 ${rankStyle.borderColor} rounded-2xl relative shadow-2xl overflow-hidden transition-all duration-300`}>
         <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-600/10 rounded-full blur-2xl pointer-events-none" />
@@ -460,56 +473,83 @@ export function HomeOverview({ currentUser, workoutHistory, quests, onNavigateTo
 
       {/* Main double column */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Dynamic Quest summaries */}
-        <div className="p-5 bg-slate-905/90 border border-slate-800 rounded-2xl flex flex-col justify-between shadow-lg">
-          <div>
-            <h4 className="text-sm font-black text-purple-400 font-mono uppercase tracking-widest flex items-center gap-2 mb-4">
-              <Star className="w-4 h-4 animate-spin" /> Hunter Rank Tasks
-            </h4>
+        {/* Dynamic Daily quest box styled exactly like Solo Leveling's blue hologram window */}
+        <div className="relative p-[1.5px] shadow-[0_0_20px_rgba(6,182,212,0.15)] bg-slate-950"
+             style={{
+               clipPath: "polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px)",
+               background: "linear-gradient(135deg, rgba(0, 212, 255, 0.45) 0%, rgba(123, 47, 190, 0.25) 100%)"
+             }}>
+          {/* Cyber Scanline animation bar for hologram */}
+          <div 
+            className="absolute inset-x-0 h-0.5 bg-[#00D4FF] opacity-35 pointer-events-none shadow-[0_0_10px_#00D4FF]"
+            style={{
+              animation: "scanLine 4s linear infinite",
+            }}
+          />
 
-            {activeQuests.length === 0 ? (
-              <div className="text-center py-6 text-gray-400 font-mono text-xs">
-                No active trials. Walk through the gates to summon quests!
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {activeQuests.map((q) => {
-                  const currentPct = Math.min((q.currentValue / q.targetValue) * 100, 100);
-                  return (
-                    <div key={q.id} className="space-y-1">
-                      <div className="flex justify-between items-center text-xs">
-                        <span className="font-bold text-[#00C8FF] font-sans truncate max-w-[150px]">{q.title}</span>
-                        <span className="font-mono text-gray-500 text-[10px]">
-                          {q.currentValue} / {q.targetValue}
-                        </span>
+          <div className="p-5 bg-[#070e1b] flex flex-col justify-between h-full relative"
+               style={{
+                 clipPath: "polygon(13px 0, 100% 0, 100% calc(100% - 13px), calc(100% - 13px) 100%, 0 100%, 0 13px)"
+               }}>
+            <div>
+              {/* Tech Corner Details */}
+              <div className="absolute top-1 left-4 w-2 h-2 border-t border-l border-[#00D4FF]/40" />
+              <div className="absolute top-1 right-2 w-2 h-2 border-t border-r border-[#00D4FF]/40" />
+              <div className="absolute bottom-2 left-2 w-2 h-2 border-b border-l border-[#00D4FF]/40" />
+              <div className="absolute bottom-2 right-4 w-2 h-2 border-b border-r border-[#00D4FF]/40" />
+
+              <h4 className="text-xs font-black text-[#00D4FF] font-mono uppercase tracking-widest flex items-center gap-2 mb-4">
+                <Star className="w-3.5 h-3.5 animate-spin text-[#00D4FF]" /> DAILY SYSTEM TRIALS
+              </h4>
+
+              {activeQuests.length === 0 ? (
+                <div className="text-center py-6 text-gray-400 font-mono text-xs">
+                  All trials cleared. Check the next gate sector!
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {activeQuests.map((q) => {
+                    const currentPct = Math.min((q.currentValue / q.targetValue) * 100, 100);
+                    return (
+                      <div key={q.id} className="space-y-1.5 font-mono">
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="font-extrabold text-[#00C8FF] text-[11px] font-sans truncate max-w-[150px]">
+                            {q.title}
+                          </span>
+                          <span className="font-mono text-cyan-400/80 text-[10px] font-black">
+                            {q.currentValue}/{q.targetValue}
+                          </span>
+                        </div>
+                        <div className="h-2 w-full bg-slate-950 rounded-none border border-cyan-500/25 overflow-hidden">
+                          <div
+                            className="h-full bg-gradient-to-r from-[#005B82] to-[#00D4FF] transition-all duration-300 relative"
+                            style={{ width: `${currentPct}%` }}
+                          >
+                            <div className="absolute inset-0 bg-white/10 animate-pulse" />
+                          </div>
+                        </div>
                       </div>
-                      <div className="h-1.5 w-full bg-slate-950 rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-gradient-to-r from-[#00C8FF] to-purple-600 transition-all duration-300"
-                          style={{ width: `${currentPct}%` }}
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            <button
+              onClick={() => onNavigateToTab("character")}
+              className="w-full mt-6 py-2 bg-[#022136] hover:bg-[#003B5C] text-[#00D4FF] font-black uppercase text-[10px] tracking-wider border border-[#00D4FF]/30 hover:border-[#00D4FF] transition-colors cursor-pointer rounded-none"
+              style={{ minHeight: "38px" }}
+            >
+              System Quests Terminal
+            </button>
           </div>
-
-          <button
-            onClick={() => onNavigateToTab("character")}
-            className="w-full mt-6 py-2.5 bg-slate-950 text-purple-400 font-black uppercase text-xs tracking-wider border border-purple-950 hover:border-purple-555/35 rounded-xl transition-colors cursor-pointer"
-            style={{ minHeight: "44px" }}
-          >
-            Guild Trials Gates
-          </button>
         </div>
 
-        {/* Campfire Streaks quick dashboard */}
-        <div className="p-5 bg-slate-905/90 border border-slate-800 rounded-2xl flex flex-col justify-between shadow-lg">
+        {/* Campfire Streaks quick dashboard with burning spirit fire SVG */}
+        <div className="p-5 bg-slate-900 border border-slate-800 rounded-2xl flex flex-col justify-between shadow-lg relative">
           <div>
             <h4 className="text-sm font-black text-amber-500 font-mono uppercase tracking-widest flex items-center gap-1.5 mb-4">
-              <Flame className="w-4 h-4 text-amber-500 animate-bounce" /> Flame Campfire Streak
+              <Flame className="w-4 h-4 text-amber-500 animate-bounce" /> SYSTEM HEURISTIC FIRE STREAK
             </h4>
 
             <div className="flex items-center gap-4 py-2">
@@ -517,9 +557,59 @@ export function HomeOverview({ currentUser, workoutHistory, quests, onNavigateTo
                 {currentUser.streak}
                 <span className="text-xs uppercase text-gray-500 font-bold block">Days Hot</span>
               </div>
+
+              {/* Curated animated Spirit Fire SVG representation */}
+              <div className="ml-auto">
+                <svg viewBox="0 0 100 100" className="w-16 h-16 pointer-events-none drop-shadow-[0_0_15px_rgba(249,115,22,0.65)] filter">
+                  <defs>
+                    <linearGradient id="fireGrad" x1="0%" y1="100%" x2="0%" y2="0%">
+                      <stop offset="0%" stopColor="#EA580C" />
+                      <stop offset="40%" stopColor="#F97316" />
+                      <stop offset="80%" stopColor="#FACC15" />
+                      <stop offset="100%" stopColor="#FEF08A" />
+                    </linearGradient>
+                    <linearGradient id="purpleFireGrad" x1="0%" y1="100%" x2="0%" y2="0%">
+                      <stop offset="0%" stopColor="#6B21A8" />
+                      <stop offset="50%" stopColor="#9333EA" />
+                      <stop offset="100%" stopColor="#C084FC" />
+                    </linearGradient>
+                  </defs>
+                  
+                  {/* Glowing flame flicker backlayer */}
+                  <path 
+                    d="M50 15 Q30 55 50 90 Q70 55 50 15 Z" 
+                    fill="url(#purpleFireGrad)" 
+                    opacity="0.32"
+                    className="origin-bottom"
+                    style={{ animation: "flicker 1.8s ease-in-out infinite" }}
+                  />
+
+                  {/* Main burning flame tongue */}
+                  <path 
+                    d="M50 25 Q35 60 50 90 Q65 60 50 25 Z" 
+                    fill="url(#fireGrad)" 
+                    className="origin-bottom"
+                    style={{ animation: "flicker 1.2s ease-in-out infinite" }}
+                  />
+
+                  {/* Inside super-hot spark core */}
+                  <path 
+                    d="M50 45 Q40 68 50 90 Q60 68 50 45 Z" 
+                    fill="#FFFFFF" 
+                    opacity="0.82"
+                    className="origin-bottom"
+                    style={{ animation: "flicker 0.8s ease-in-out infinite reverse" }}
+                  />
+
+                  {/* Embers floating upward shapes */}
+                  <circle cx="42" cy="52" r="2" fill="#FACC15" style={{ animation: "emberFloat 2.4s ease-in-out infinite" }} />
+                  <circle cx="58" cy="42" r="1.5" fill="#FEF08A" style={{ animation: "emberFloat 1.9s ease-in-out infinite 0.4s" }} />
+                  <circle cx="48" cy="32" r="1" fill="#FFFFFF" style={{ animation: "emberFloat 1.4s ease-in-out infinite 0.8s" }} />
+                </svg>
+              </div>
             </div>
-            <p className="text-gray-400 text-xs mt-1.5">
-              Keep the system training hot. Skipping a day triggers the punishment zones!
+            <p className="text-gray-400 text-xs mt-1.5 font-mono leading-relaxed">
+              Keep the system link active. Skipping a day triggers punishment system logs!
             </p>
           </div>
 
@@ -648,6 +738,19 @@ export function HomeOverview({ currentUser, workoutHistory, quests, onNavigateTo
               0% { top: 0%; }
               50% { top: 100%; }
               100% { top: 0%; }
+            }
+            @keyframes blink {
+              0%, 100% { opacity: 1; }
+              50% { opacity: 0; }
+            }
+            @keyframes flicker {
+              0%, 100% { transform: scale(1) rotate(-1.5deg); }
+              50% { transform: scale(1.1) rotate(2deg) skewX(2deg); }
+            }
+            @keyframes emberFloat {
+              0% { transform: translateY(15px) scale(0.35); opacity: 0; }
+              20% { opacity: 1; }
+              100% { transform: translateY(-40px) scale(1); opacity: 0; }
             }
           `}</style>
         </div>

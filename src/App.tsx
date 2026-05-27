@@ -30,6 +30,27 @@ export default function App() {
   const [levelUpTarget, setLevelUpTarget] = useState(1);
   const [workoutSaving, setWorkoutSaving] = useState(false);
 
+  // Solo Leveling Gates Opening States
+  const [gatesOpen, setGatesOpen] = useState(false);
+  const [gatesActive, setGatesActive] = useState(true);
+
+  useEffect(() => {
+    // Start sliding apart after 1200ms
+    const slideTimer = setTimeout(() => {
+      setGatesOpen(true);
+    }, 1200);
+
+    // Remove from DOM after transition completes
+    const removeTimer = setTimeout(() => {
+      setGatesActive(false);
+    }, 2800);
+
+    return () => {
+      clearTimeout(slideTimer);
+      clearTimeout(removeTimer);
+    };
+  }, []);
+
   // Authenticate listener
   useEffect(() => {
     let unsubscribe: (() => void) | undefined;
@@ -546,6 +567,59 @@ export default function App() {
       {/* Particle background ember floating */}
       <ParticleBackground />
 
+      {/* Solo Leveling Dual Gates Opening Animation */}
+      {gatesActive && (
+        <div className="fixed inset-0 z-[999] pointer-events-none flex overflow-hidden">
+          {/* Left Door */}
+          <div
+            className="w-1/2 h-full border-r border-[#7B2FBE]/30 flex flex-col justify-center items-end pr-8 transition-transform duration-[1200ms] cubic-bezier(0.77, 0, 0.175, 1) pointer-events-auto shadow-[15px_0_30px_rgba(0,0,0,0.85)]"
+            style={{
+              transform: gatesOpen ? "translateX(-100%)" : "translateX(0%)",
+              backgroundImage: "radial-gradient(circle at right, #0F0A1E 0%, #030611 100%)"
+            }}
+          >
+            {/* Runes & Heavy Stone Gate texture */}
+            <div className="max-w-[180px] text-right font-mono space-y-3 opacity-60">
+              <div className="text-[10px] text-[#7B2FBE] tracking-widest font-bold">WARNING: INTEGRITY</div>
+              <p className="text-[8px] text-gray-500 font-bold tracking-tight">RITUAL_DOOR_01</p>
+              <div className="text-xs text-purple-400 font-extrabold leading-none tracking-widest select-none uppercase">
+                ARISE / ARISE / ARISE
+              </div>
+            </div>
+          </div>
+
+          {/* Right Door */}
+          <div
+            className="w-1/2 h-full border-l border-[#00D4FF]/30 flex flex-col justify-center items-start pl-8 transition-transform duration-[1200ms] cubic-bezier(0.77, 0, 0.175, 1) pointer-events-auto shadow-[-15px_0_30px_rgba(0,0,0,0.85)]"
+            style={{
+              transform: gatesOpen ? "translateX(100%)" : "translateX(0%)",
+              backgroundImage: "radial-gradient(circle at left, #0A1424 0%, #030611 100%)"
+            }}
+          >
+            {/* Right Door graphics */}
+            <div className="max-w-[180px] text-left font-mono space-y-3 opacity-60">
+              <div className="text-[10px] text-[#00D4FF] tracking-widest font-bold font-mono">SYSTEM LOADING</div>
+              <p className="text-[8px] text-gray-500 font-bold tracking-tight">REALM_HUNTER_GATE_02</p>
+              <div className="text-xs text-cyan-400 font-extrabold leading-none tracking-widest select-none uppercase animate-pulse">
+                SYSTEM_LINK_ACTIVE
+              </div>
+            </div>
+          </div>
+
+          {/* S-Gate Rune Center Seal */}
+          <div
+            className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-28 h-28 rounded-full border-2 border-purple-500 bg-[#060A1A] flex items-center justify-center transition-all duration-700 pointer-events-auto shadow-[0_0_40px_rgba(123,47,190,0.5)] z-50 ${
+              gatesOpen ? "scale-0 opacity-0 rotate-180" : "scale-100 opacity-100"
+            }`}
+          >
+            <div className="absolute inset-1 border border-dashed border-cyan-400 rounded-full animate-spin" />
+            <span className="text-[#00D4FF] font-mono font-black text-xl tracking-wider select-none animate-pulse">
+              S-GATE
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* Level Up splash render */}
       {currentUser && (
         <LevelUpSplash
@@ -609,7 +683,7 @@ export default function App() {
 
                 {activeTab === "workout" && (
                   <div className="space-y-6">
-                    <WorkoutLogger onLogWorkout={handleLogWorkout} isLogging={workoutSaving} />
+                    <WorkoutLogger onLogWorkout={handleLogWorkout} isLogging={workoutSaving} workoutHistory={workoutHistory} />
                   </div>
                 )}
 

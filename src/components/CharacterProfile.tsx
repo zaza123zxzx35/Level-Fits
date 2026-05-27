@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { UserProfile, WorkoutLog } from "../types";
 import { AnimatedAvatar } from "./AnimatedAvatar";
 import { 
@@ -109,6 +109,30 @@ export function CharacterProfile({ currentUser, workoutHistory, onRefreshProfile
   const [speakerText, setSpeakerText] = useState<string | null>(null);
   const [ariseSimulating, setAriseSimulating] = useState(false);
   const [extractedShadow, setExtractedShadow] = useState<string | null>(null);
+
+  const prevStats = useRef(currentUser.stats);
+  const [increasedStats, setIncreasedStats] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    const diffs: Record<string, boolean> = {};
+    let changed = false;
+    (["STR", "AGI", "END", "VIT"] as const).forEach(key => {
+      if (currentUser.stats[key] > prevStats.current[key]) {
+        diffs[key] = true;
+        changed = true;
+      }
+    });
+
+    if (changed) {
+      setIncreasedStats(prev => ({ ...prev, ...diffs }));
+      const timer = setTimeout(() => {
+        setIncreasedStats({});
+      }, 3500);
+      prevStats.current = currentUser.stats;
+      return () => clearTimeout(timer);
+    }
+    prevStats.current = currentUser.stats;
+  }, [currentUser.stats]);
 
   const hunterRank = getHunterRank(currentUser.level);
   const rankStyle = RANK_METADATA[hunterRank];
@@ -254,6 +278,59 @@ export function CharacterProfile({ currentUser, workoutHistory, onRefreshProfile
           SYSTEM_HUD_v4.20
         </div>
 
+        {/* Large warrior silhouette SVG with animated purple aura pulsing behind */}
+        <div className="relative w-full h-56 bg-slate-950/90 border border-purple-500/25 rounded-2xl overflow-hidden flex items-center justify-center my-4 shadow-inner">
+          {/* Intense Purple Aura pulsing in waves */}
+          <div className="absolute w-44 h-44 bg-[#7B2FBE] rounded-full blur-[40px] opacity-35 animate-[glowingPulse_3.5s_ease-in-out_infinite]" />
+          
+          {/* Swirling particle/ember rings for aura effect */}
+          <div className="absolute w-40 h-40 border border-dashed border-purple-500/30 rounded-full animate-[spin_12s_linear_infinite]" />
+          <div className="absolute w-32 h-32 border border-dotted border-cyan-400/25 rounded-full animate-[spin_8s_linear_infinite_reverse]" />
+
+          {/* Geometric shadow warrior silhouette */}
+          <svg viewBox="0 0 100 120" className="h-full w-auto z-10 filter drop-shadow-[0_0_12px_#7B2FBE]">
+            <defs>
+              <linearGradient id="shadowWarriorGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor="#1C0E2B" />
+                <stop offset="50%" stopColor="#0B0314" />
+                <stop offset="100%" stopColor="#020005" />
+              </linearGradient>
+            </defs>
+
+            {/* Geometric sharp-edged body silhouette */}
+            {/* Cape/swirling cloak details */}
+            <path d="M50 20 L22 100 L32 115 L50 110 L68 115 L78 100 Z" fill="url(#shadowWarriorGrad)" />
+            <path d="M12 110 Q25 78 40 45 L50 60 L60 45 Q75 78 88 110 Z" fill="#05010C" opacity="0.65" />
+
+            {/* Sharp armor plates, shoulders */}
+            <polygon points="35,46 22,54 28,68 38,58" fill="#150625" stroke="#7B2FBE" strokeWidth="0.8" />
+            <polygon points="65,46 78,54 72,68 62,58" fill="#150625" stroke="#7B2FBE" strokeWidth="0.8" />
+
+            {/* Sharp chest plate segments */}
+            <polygon points="50,48 42,66 50,78 58,66" fill="#0A0214" stroke="#7B2FBE" strokeWidth="1" />
+            
+            {/* Helm of the Shadow Monarch */}
+            <path d="M42,42 Q30,30 40,16 L50,10 L60,16 Q70,30 58,42 Z" fill="#0F031C" stroke="#7B2FBE" strokeWidth="1.2" />
+            <polygon points="50,15 45,28 50,34 55,28" fill="#05010A" />
+
+            {/* Dual glowing Monarch eyes */}
+            <circle cx="45" cy="27" r="1.5" fill="#00D4FF" className="animate-pulse" />
+            <circle cx="55" cy="27" r="1.5" fill="#00D4FF" className="animate-pulse" />
+            
+            {/* Energy whiskers venting from the crown sides */}
+            <path d="M45 27 Q33 22 25 32" fill="none" stroke="#00D4FF" strokeWidth="0.8" strokeLinecap="round" opacity="0.8" />
+            <path d="M55 27 Q67 22 75 32" fill="none" stroke="#00D4FF" strokeWidth="0.8" strokeLinecap="round" opacity="0.8" />
+          </svg>
+
+          {/* Cyber hud coordinates running in overlay */}
+          <div className="absolute bottom-2 left-4 font-mono text-[8px] text-gray-500 tracking-wider">
+            GRID_REF: 81-Z / CHOSEN_WARRIOR
+          </div>
+          <div className="absolute top-2 right-4 font-mono text-[8px] text-purple-400 font-extrabold tracking-widest animate-pulse">
+            SHADOW_MONARCH_ACTIVE
+          </div>
+        </div>
+
         <AnimatedAvatar characterClass={currentUser.characterClass} level={currentUser.level} />
 
         <h3 className="text-2xl font-black text-white mt-4 font-sans tracking-wide">
@@ -352,64 +429,92 @@ export function CharacterProfile({ currentUser, workoutHistory, onRefreshProfile
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* STR */}
-              <div className="p-3 bg-slate-950/60 rounded-xl border border-rose-500/20 flex flex-col justify-between">
+              <div className={`p-3 bg-slate-950/60 rounded-xl border ${increasedStats.STR ? "border-green-500 shadow-[0_0_12px_rgba(34,197,94,0.3)] animate-pulse" : "border-rose-500/20"} flex flex-col justify-between transition-all duration-500`}>
                 <div className="flex justify-between items-center mb-1">
                   <span className="text-white text-xs font-black font-mono flex items-center gap-1.5 uppercase">
                     <Sword className="w-4 h-4 text-rose-500" /> STR (Strength)
                   </span>
-                  <span className="text-rose-400 font-mono font-black text-sm">{currentUser.stats.STR}</span>
+                  <div className="flex items-center gap-1.5">
+                    {increasedStats.STR && (
+                      <span className="text-green-400 font-extrabold text-[10px] animate-bounce flex items-center gap-0.5 font-mono">
+                        ▲ UP
+                      </span>
+                    )}
+                    <span className="text-rose-400 font-mono font-black text-sm">{currentUser.stats.STR}</span>
+                  </div>
                 </div>
                 <div className="h-1.5 w-full bg-slate-900 rounded-full overflow-hidden mt-1.5">
                   <div 
-                    className="h-full bg-rose-500 transition-all duration-300"
+                    className={`h-full ${increasedStats.STR ? 'bg-green-500' : 'bg-rose-500'} transition-all duration-300`}
                     style={{ width: `${Math.min(currentUser.stats.STR * 2.5, 100)}%` }}
                   />
                 </div>
               </div>
 
               {/* AGI */}
-              <div className="p-3 bg-slate-950/60 rounded-xl border border-cyan-500/20 flex flex-col justify-between">
+              <div className={`p-3 bg-slate-950/60 rounded-xl border ${increasedStats.AGI ? "border-green-500 shadow-[0_0_12px_rgba(34,197,94,0.3)] animate-pulse" : "border-cyan-500/20"} flex flex-col justify-between transition-all duration-500`}>
                 <div className="flex justify-between items-center mb-1">
                   <span className="text-white text-xs font-black font-mono flex items-center gap-1.5 uppercase">
                     <Compass className="w-4 h-4 text-blue-400" /> AGI (Agility)
                   </span>
-                  <span className="text-[#00C8FF] font-mono font-black text-sm">{currentUser.stats.AGI}</span>
+                  <div className="flex items-center gap-1.5">
+                    {increasedStats.AGI && (
+                      <span className="text-green-400 font-extrabold text-[10px] animate-bounce flex items-center gap-0.5 font-mono">
+                        ▲ UP
+                      </span>
+                    )}
+                    <span className="text-[#00C8FF] font-mono font-black text-sm">{currentUser.stats.AGI}</span>
+                  </div>
                 </div>
                 <div className="h-1.5 w-full bg-slate-900 rounded-full overflow-hidden mt-1.5">
                   <div 
-                    className="h-full bg-[#00C8FF] transition-all duration-300"
+                    className={`h-full ${increasedStats.AGI ? 'bg-green-500' : 'bg-[#00C8FF]'} transition-all duration-300`}
                     style={{ width: `${Math.min(currentUser.stats.AGI * 2.5, 100)}%` }}
                   />
                 </div>
               </div>
 
               {/* END */}
-              <div className="p-3 bg-slate-950/60 rounded-xl border border-amber-500/20 flex flex-col justify-between">
+              <div className={`p-3 bg-slate-950/60 rounded-xl border ${increasedStats.END ? "border-green-500 shadow-[0_0_12px_rgba(34,197,94,0.3)] animate-pulse" : "border-amber-500/20"} flex flex-col justify-between transition-all duration-500`}>
                 <div className="flex justify-between items-center mb-1">
                   <span className="text-white text-xs font-black font-mono flex items-center gap-1.5 uppercase">
                     <Shield className="w-4 h-4 text-amber-500" /> END (Endurance)
                   </span>
-                  <span className="text-amber-500 font-mono font-black text-sm">{currentUser.stats.END}</span>
+                  <div className="flex items-center gap-1.5">
+                    {increasedStats.END && (
+                      <span className="text-green-400 font-extrabold text-[10px] animate-bounce flex items-center gap-0.5 font-mono">
+                        ▲ UP
+                      </span>
+                    )}
+                    <span className="text-amber-500 font-mono font-black text-sm">{currentUser.stats.END}</span>
+                  </div>
                 </div>
                 <div className="h-1.5 w-full bg-slate-900 rounded-full overflow-hidden mt-1.5">
                   <div 
-                    className="h-full bg-amber-500 transition-all duration-300"
+                    className={`h-full ${increasedStats.END ? 'bg-green-500' : 'bg-amber-500'} transition-all duration-300`}
                     style={{ width: `${Math.min(currentUser.stats.END * 2.5, 100)}%` }}
                   />
                 </div>
               </div>
 
               {/* VIT */}
-              <div className="p-3 bg-slate-950/60 rounded-xl border border-purple-500/20 flex flex-col justify-between">
+              <div className={`p-3 bg-slate-950/60 rounded-xl border ${increasedStats.VIT ? "border-green-500 shadow-[0_0_12px_rgba(34,197,94,0.3)] animate-pulse" : "border-purple-500/20"} flex flex-col justify-between transition-all duration-500`}>
                 <div className="flex justify-between items-center mb-1">
                   <span className="text-white text-xs font-black font-mono flex items-center gap-1.5 uppercase">
                     <Heart className="w-4 h-4 text-purple-400" /> VIT (Vitality)
                   </span>
-                  <span className="text-purple-400 font-mono font-black text-sm">{currentUser.stats.VIT}</span>
+                  <div className="flex items-center gap-1.5">
+                    {increasedStats.VIT && (
+                      <span className="text-green-400 font-extrabold text-[10px] animate-bounce flex items-center gap-0.5 font-mono">
+                        ▲ UP
+                      </span>
+                    )}
+                    <span className="text-purple-400 font-mono font-black text-sm">{currentUser.stats.VIT}</span>
+                  </div>
                 </div>
                 <div className="h-1.5 w-full bg-slate-900 rounded-full overflow-hidden mt-1.5">
                   <div 
-                    className="h-full bg-purple-500 transition-all duration-300"
+                    className={`h-full ${increasedStats.VIT ? 'bg-green-500' : 'bg-purple-500'} transition-all duration-300`}
                     style={{ width: `${Math.min(currentUser.stats.VIT * 2.5, 100)}%` }}
                   />
                 </div>
@@ -536,6 +641,14 @@ export function CharacterProfile({ currentUser, workoutHistory, onRefreshProfile
           </div>
         </div>
       )}
+
+      {/* Cyber animated styles */}
+      <style>{`
+        @keyframes glowingPulse {
+          0%, 100% { transform: scale(1); opacity: 0.35; }
+          50% { transform: scale(1.15); opacity: 0.65; }
+        }
+      `}</style>
     </div>
   );
 }
