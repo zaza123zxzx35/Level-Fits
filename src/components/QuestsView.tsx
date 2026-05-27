@@ -279,7 +279,7 @@ export function QuestsView({ currentUser, workoutHistory, onClaimQuest, onRefres
                     <div className="text-right whitespace-nowrap self-stretch md:self-auto flex md:flex-col justify-between items-center md:items-end font-mono">
                       <span className="text-xs text-yellow-400 font-bold block">+{quest.xpReward} XP</span>
                       {quest.badgeReward && (
-                        <span className="text-[10px] text-purple-400 font-semibold block uppercase">🏷️ {quest.badgeReward}</span>
+                        <span className="text-[10px] text-purple-400 font-semibold block uppercase">Loot: {quest.badgeReward}</span>
                       )}
                     </div>
                   </div>

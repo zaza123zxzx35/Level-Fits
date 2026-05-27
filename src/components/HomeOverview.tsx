@@ -13,7 +13,9 @@ import {
   Activity, 
   Zap,
   CheckCircle,
-  TrendingUp
+  TrendingUp,
+  Skull,
+  Terminal
 } from "lucide-react";
 import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import { db } from "../firebase";
@@ -73,6 +75,8 @@ export function HomeOverview({ currentUser, workoutHistory, quests, onNavigateTo
     active: true,
     claimed: false
   });
+
+  const [showSystemWindow, setShowSystemWindow] = useState(true);
 
   // Load persistently from Firestore or localStorage Fallback
   useEffect(() => {
@@ -192,7 +196,7 @@ export function HomeOverview({ currentUser, workoutHistory, quests, onNavigateTo
     const damage = Math.floor(Math.random() * 850) + 400 + (currentUser.stats.STR * 15);
     const newHp = Math.max(boss.hp - damage, 0);
 
-    setLastStrikeLog(`⚔️ CRITICAL DOUBLE SLASH! Handled -${damage.toLocaleString()} DMG!`);
+    setLastStrikeLog(`CRITICAL DOUBLE SLASH! Handled -${damage.toLocaleString()} DMG!`);
 
     const updatedBoss: GuildBoss = {
       ...boss,
@@ -288,7 +292,16 @@ export function HomeOverview({ currentUser, workoutHistory, quests, onNavigateTo
 
         <div className="flex justify-between items-center mb-1 font-sans">
           <div>
-            <span className="text-gray-400 text-[10px] font-mono uppercase tracking-widest block">Monarch Rank HUD</span>
+            <div className="flex justify-between items-center mr-1">
+              <span className="text-gray-400 text-[10px] font-mono uppercase tracking-widest block">Monarch Rank HUD</span>
+              <button 
+                onClick={() => setShowSystemWindow(true)}
+                className="px-2 py-0.5 text-[9px] bg-[#002B42]/75 hover:bg-[#003B5C] text-[#00D4FF] border border-[#00D4FF]/35 rounded font-mono font-bold flex items-center gap-1 cursor-pointer transition-colors"
+                style={{ minHeight: "24px" }}
+              >
+                <Terminal className="w-3 h-3" /> SYSTEM INTERFACE
+              </button>
+            </div>
             <h3 className="text-2xl font-black text-white">{currentUser.displayName}</h3>
           </div>
           <div className="text-right font-mono">
@@ -329,7 +342,7 @@ export function HomeOverview({ currentUser, workoutHistory, quests, onNavigateTo
         <div className="flex justify-between items-start mb-2">
           <div>
             <span className="text-red-500 text-[9px] font-mono uppercase tracking-widest block font-black">
-              ⚔️ WEEKLY GUILD RAID EVENT
+              WEEKLY GUILD RAID EVENT
             </span>
             <h4 className="text-sm font-black text-white uppercase tracking-tight font-sans">
               {boss.name}
@@ -385,11 +398,11 @@ export function HomeOverview({ currentUser, workoutHistory, quests, onNavigateTo
       {gate.active && (
         <div className="p-5 bg-gradient-to-br from-[#0F0C02] via-[#041E26] to-[#0A0D1A] border-2 border-cyan-400/30 rounded-2xl relative shadow-2xl">
           <div className="absolute -top-1 right-3 px-2 py-0.5 bg-cyan-500 text-slate-950 text-[9px] font-mono font-extrabold uppercase rounded shadow-lg animate-pulse">
-            ⚠️ EMERGENCY DUNGEON
+            ALERT: EMERGENCY DUNGEON
           </div>
 
-          <div className="flex justify-between items-center mb-1">
-            <span className="text-[#02C8FF] text-xs font-mono font-black uppercase tracking-wider">
+          <div className="flex justify-between items-center mb-1 col-span-2">
+            <span className="text-[#00D4FF] text-xs font-mono font-black uppercase tracking-wider">
               {gate.title}
             </span>
             <div className="flex items-center gap-1.5 font-mono text-xs text-yellow-500 font-extrabold bg-[#2B2302] border border-yellow-500/20 px-2 py-0.5 rounded-full">
@@ -397,11 +410,31 @@ export function HomeOverview({ currentUser, workoutHistory, quests, onNavigateTo
             </div>
           </div>
 
-          <p className="text-[11px] text-gray-400 font-sans leading-relaxed mt-1.5">
-            Clear goal: Log {gate.goalMinutes} minutes of <span className="text-[#00C8FF] font-bold uppercase">{gate.goalCategory}</span> to clear this Dungeon Gate before it closes!
+          <p className="text-[11px] text-gray-400 font-sans leading-relaxed mt-2.5">
+            Clear goal: Log {gate.goalMinutes} minutes of <span className="text-[#00D4FF] font-bold uppercase">{gate.goalCategory}</span> to clear this Dungeon Gate before it closes!
           </p>
 
-          <div className="mt-4 flex justify-between items-center bg-[#07131D] border border-[#00C8FF]/15 p-2 rounded-xl text-[10px] font-mono">
+          {/* Majestic Animated Dungeon Gate Portal (rotating rings, purple energy core) */}
+          <div className="relative w-28 h-28 mx-auto flex items-center justify-center my-4">
+            {/* Swirling energy background blur sphere */}
+            <div className="absolute inset-0 rounded-full bg-purple-600/25 blur-xl animate-pulse pointer-events-none" />
+            
+            {/* Rotating Purple Dungeon Portal outer ring */}
+            <div className="absolute w-24 h-24 border-4 border-dashed border-purple-500/60 rounded-full animate-[spin_12s_linear_infinite] pointer-events-none" />
+            
+            {/* Counter-rotating Cyan Portal inner ring */}
+            <div className="absolute w-19 h-19 border-2 border-cyan-400/50 border-t-purple-650 border-b-cyan-500 rounded-full animate-[spin_8s_linear_infinite_reverse] pointer-events-none" />
+            
+            {/* Glowing Purple Core Sphere with a skull and pulses */}
+            <div className="absolute w-12 h-12 bg-gradient-to-r from-[#120526] via-[#7B2FBE] to-[#0A0D18] rounded-full flex items-center justify-center border border-purple-400/40 shadow-[0_0_20px_#7B2FBE] animate-pulse">
+              <Skull className="w-5 h-5 text-cyan-300 animate-pulse" strokeWidth={1.5} />
+            </div>
+            
+            {/* Cyber runic overlay details */}
+            <div className="absolute inset-3 border border-cyan-400/10 rounded-full pointer-events-none animate-ping opacity-10" />
+          </div>
+
+          <div className="mt-4 flex justify-between items-center bg-[#07131D] border border-[#00D4FF]/15 p-2 rounded-xl text-[10px] font-mono">
             <span className="text-gray-400">EXP Reward: <b className="text-[#00C8FF]">+400 XP</b></span>
             <span className="text-gray-400">Loot: <b className="text-yellow-400">Exclusive Shadow Soldier</b></span>
           </div>
@@ -536,6 +569,89 @@ export function HomeOverview({ currentUser, workoutHistory, quests, onNavigateTo
           </div>
         )}
       </div>
+
+      {showSystemWindow && (
+        <div className="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center p-4">
+          {/* Holographic Glowing Card Container with Cyber Hex bordering pattern */}
+          <div className="relative w-full max-w-sm bg-[#091124] border-2 border-[#00D4FF]/45 rounded-2xl p-6 shadow-[0_0_35px_rgba(0,212,255,0.30)] overflow-hidden">
+            
+            {/* Cyber Scanline Laser animation bar */}
+            <div 
+              className="absolute inset-x-0 h-0.5 bg-gradient-to-r from-transparent via-[#00D4FF] to-transparent shadow-[0_0_15px_#00D4FF] opacity-90 pointer-events-none"
+              style={{
+                animation: "scanLine 3s linear infinite",
+              }}
+            />
+
+            {/* Glowing Custom Tech corners */}
+            <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-[#00D4FF]" />
+            <div className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-[#00D4FF]" />
+            <div className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-[#00D4FF]" />
+            <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-[#00D4FF]" />
+
+            {/* Monospaced System Content */}
+            <div className="relative z-10 space-y-4 font-mono text-left">
+              <div className="flex items-center justify-between border-b border-[#00D4FF]/25 pb-3">
+                <div className="flex items-center gap-2">
+                  <Terminal className="w-5 h-5 text-[#00D4FF] animate-pulse" />
+                  <h3 className="text-sm font-black text-[#00D4FF] tracking-wider uppercase">
+                    SYSTEM ALERT HUD
+                  </h3>
+                </div>
+                <span className="text-[8px] px-1.5 py-0.5 bg-[#00D4FF]/10 text-[#00D4FF] border border-[#00D4FF]/25 rounded">
+                  SYS_V2.10
+                </span>
+              </div>
+
+              <div className="space-y-3.5 text-xs text-gray-300 leading-relaxed">
+                <div className="flex gap-2">
+                  <span className="text-[#00D4FF] font-black">&gt;&gt;</span>
+                  <p>USER LINK CONFIRMED. RITUAL STATUS STABLE.</p>
+                </div>
+                {gate.active && (
+                  <div className="flex gap-2 text-cyan-400">
+                    <span className="text-[#00D4FF] font-black">&gt;&gt;</span>
+                    <p className="font-extrabold">EMERGENCY: ACTIVE PORTAL IS RAGING IN YOUR COORDINATES.</p>
+                  </div>
+                )}
+                {boss.hp > 0 ? (
+                  <div className="flex gap-2 text-rose-400">
+                    <span className="text-rose-400 font-black">&gt;&gt;</span>
+                    <p>GUILD MISSION: STRIP THE Demon King IN THE BOSS LOBBY.</p>
+                  </div>
+                ) : (
+                  <div className="flex gap-2 text-emerald-400">
+                    <span className="text-emerald-400 font-black">&gt;&gt;</span>
+                    <p>CONGRATULATIONS: DEMON SOVEREIGN HAS BEEN OBLITERATED.</p>
+                  </div>
+                )}
+              </div>
+
+              <div className="pt-4 flex justify-end">
+                <button
+                  onClick={() => setShowSystemWindow(false)}
+                  className="px-4 py-2 bg-[#001D33] hover:bg-[#002F4F] text-[#00D4FF] text-xs font-black uppercase border border-[#00D4FF]/30 hover:border-[#00D4FF] rounded-xl transition-all cursor-pointer shadow-[0_0_12px_rgba(0,212,255,0.15)]"
+                  style={{ minHeight: "40px" }}
+                >
+                  DISMISS OVERLAY
+                </button>
+              </div>
+            </div>
+            
+            {/* Inner aesthetic grid elements */}
+            <div className="absolute inset-2 border border-cyan-500/5 rounded-2xl pointer-events-none" />
+          </div>
+
+          {/* Injected animations */}
+          <style>{`
+            @keyframes scanLine {
+              0% { top: 0%; }
+              50% { top: 100%; }
+              100% { top: 0%; }
+            }
+          `}</style>
+        </div>
+      )}
     </div>
   );
 }

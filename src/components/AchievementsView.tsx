@@ -256,7 +256,7 @@ export function AchievementsView({ currentUser, workoutHistory, onRefreshProfile
           {currentUser.equippedTitle ? (
             <div className="flex items-center gap-2">
               <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-black text-yellow-400 bg-yellow-950/50 border border-yellow-500/30 shadow-[0_0_8px_rgba(234,179,8,0.25)] uppercase tracking-widest animate-pulse">
-                🏆 {ACHIEVEMENTS_LIST.find(a => a.badgeId === currentUser.equippedTitle)?.badgeTitle || currentUser.equippedTitle}
+                Title: {ACHIEVEMENTS_LIST.find(a => a.badgeId === currentUser.equippedTitle)?.badgeTitle || currentUser.equippedTitle}
               </span>
             </div>
           ) : (
@@ -288,7 +288,7 @@ export function AchievementsView({ currentUser, workoutHistory, onRefreshProfile
             }`}
             style={{ minHeight: "34px" }}
           >
-            {cat === "All" ? "🔥 All Gigs" : cat}
+            {cat === "All" ? "All Gigs" : cat}
           </button>
         ))}
       </div>

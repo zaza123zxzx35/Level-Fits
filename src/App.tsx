@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc, setDoc, updateDoc, collection, addDoc, onSnapshot } from "firebase/firestore";
 import { auth, db } from "./firebase";
@@ -705,7 +705,7 @@ export default function App() {
                   }`}
                   style={{ minWidth: "44px", minHeight: "44px" }}
                 >
-                  <Home className={`w-5 h-5 ${activeTab === "home" ? "scale-110" : ""}`} />
+                  <CastleIcon className={`w-5 h-5 ${activeTab === "home" ? "scale-110" : ""}`} />
                   <span className="text-[9px] font-bold tracking-widest uppercase font-mono mt-1">Home</span>
                 </button>
 
@@ -716,7 +716,7 @@ export default function App() {
                   }`}
                   style={{ minWidth: "44px", minHeight: "44px" }}
                 >
-                  <Dumbbell className={`w-5 h-5 ${activeTab === "workout" ? "scale-110" : ""}`} />
+                  <CrossedSwordsIcon className={`w-5 h-5 ${activeTab === "workout" ? "scale-110" : ""}`} />
                   <span className="text-[9px] font-bold tracking-widest uppercase font-mono mt-1">Workout</span>
                 </button>
 
@@ -727,7 +727,7 @@ export default function App() {
                   }`}
                   style={{ minWidth: "44px", minHeight: "44px" }}
                 >
-                  <User className={`w-5 h-5 ${activeTab === "character" ? "scale-110" : ""}`} />
+                  <HelmetIcon className={`w-5 h-5 ${activeTab === "character" ? "scale-110" : ""}`} />
                   <span className="text-[9px] font-bold tracking-widest uppercase font-mono mt-1">Character</span>
                 </button>
 
@@ -739,7 +739,7 @@ export default function App() {
                   style={{ minWidth: "44px", minHeight: "44px" }}
                 >
                   <Trophy className={`w-5 h-5 ${activeTab === "leaderboard" ? "scale-110" : ""}`} />
-                  <span className="text-[9px] font-bold tracking-widest uppercase font-mono mt-1">Leaderboard</span>
+                  <span className="text-[9px] font-bold tracking-widest uppercase font-mono mt-1">Leader</span>
                 </button>
 
                 <button
@@ -749,7 +749,7 @@ export default function App() {
                   }`}
                   style={{ minWidth: "44px", minHeight: "44px" }}
                 >
-                  <Shield className={`w-5 h-5 ${activeTab === "profile" ? "scale-110" : ""}`} />
+                  <HunterMaskIcon className={`w-5 h-5 ${activeTab === "profile" ? "scale-110" : ""}`} />
                   <span className="text-[9px] font-bold tracking-widest uppercase font-mono mt-1">Profile</span>
                 </button>
               </nav>
@@ -759,5 +759,53 @@ export default function App() {
         </div>
       </div>
     </div>
+  );
+}
+
+// Hand-drawn custom vector icons matching the dark fantasy Solo Leveling request scope
+function CastleIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M22 20v-9H2v9" />
+      <path d="M18 11V4h-3v3h-2V4h-3v3H8V4H5v7" />
+      <path d="M11 20v-4a1 1 0 0 1 1-1h0a1 1 0 0 1 1 1v4" />
+    </svg>
+  );
+}
+
+function CrossedSwordsIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5" />
+      <line x1="13" y1="19" x2="19" y2="13" />
+      <line x1="16" y1="16" x2="20" y2="20" />
+      <line x1="19" y1="21" x2="21" y2="19" />
+      <polyline points="14.5 6.5 21 13" />
+      <polyline points="9.5 17.5 3 11" />
+    </svg>
+  );
+}
+
+function HelmetIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M2 11c0 5 4 10 10 10s10-5 10-10C22 6 18 2 12 2S2 6 2 11z" />
+      <path d="M12 2v9" />
+      <path d="M5 11h14" strokeWidth="2" />
+      <path d="M9 11v5" />
+      <path d="M15 11v5" />
+    </svg>
+  );
+}
+
+function HunterMaskIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M4 10l2-6h12l2 6v6c0 3-3 5-8 5s-8-2-8-5v-6z" />
+      {/* Eye cuts glowing details */}
+      <path d="M7 10l3 1.5" />
+      <path d="M17 10l-3 1.5" />
+      <path d="M12 11v3" />
+    </svg>
   );
 }

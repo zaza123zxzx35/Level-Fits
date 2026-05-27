@@ -476,15 +476,15 @@ export function LeaderboardView({ currentUser }: LeaderboardViewProps) {
                 >
                   <div className="flex items-center gap-4">
                     {/* Rank Badge */}
-                    <div className="w-6 text-center font-mono font-black text-sm">
+                    <div className="w-12 text-left font-mono font-black text-xs">
                       {rank === 1 ? (
-                        <span className="text-yellow-400 text-lg">🥇</span>
+                        <span className="text-yellow-400 font-extrabold pb-0.5">[1ST]</span>
                       ) : rank === 2 ? (
-                        <span className="text-slate-400 text-lg">🥈</span>
+                        <span className="text-slate-400 font-extrabold pb-0.5">[2ND]</span>
                       ) : rank === 3 ? (
-                        <span className="text-amber-600 text-lg">🥉</span>
+                        <span className="text-amber-600 font-extrabold pb-0.5">[3RD]</span>
                       ) : (
-                        <span className="text-gray-500 text-xs">{rank}</span>
+                        <span className="text-gray-500">[{rank}TH]</span>
                       )}
                     </div>
 
