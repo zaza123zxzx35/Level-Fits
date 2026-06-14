@@ -1,989 +1,650 @@
-import React, { useState, useEffect } from "react";
-import { onAuthStateChanged } from "firebase/auth";
-import { doc, getDoc, setDoc, updateDoc, collection, addDoc, onSnapshot } from "firebase/firestore";
-import { auth, db } from "./firebase";
-import { UserProfile, WorkoutLog, Quest, WorkoutCategory, CharacterClass } from "./types";
-import { AuthScreen } from "./components/AuthScreen";
-import { ParticleBackground } from "./components/ParticleBackground";
-import { LevelUpSplash } from "./components/LevelUpSplash";
-import { HomeOverview } from "./components/HomeOverview";
-import { WorkoutLogger } from "./components/WorkoutLogger";
-import { CharacterProfile } from "./components/CharacterProfile";
-import { QuestsView } from "./components/QuestsView";
-import { LeaderboardView } from "./components/LeaderboardView";
-import { ProfileView } from "./components/ProfileView";
-import { AchievementsView } from "./components/AchievementsView";
-import { Home, Dumbbell, Shield, Trophy, User, Sparkles, Flame, LogOut, Loader2, Compass, Volume2, VolumeX } from "lucide-react";
-import { sfx } from "./utils/audio";
+import React, { useState, useCallback, useRef } from "react";
 
-export default function App() {
-  const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
-  const [authLoading, setAuthLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"home" | "workout" | "character" | "leaderboard" | "profile">("home");
-  const [charSubTab, setCharSubTab] = useState<"status" | "quests" | "achievements">("status");
-  const [sfxEnabled, setSfxEnabled] = useState(sfx.getEnabled());
+/* ════════════════════════════════════════════════
+   DATA
+════════════════════════════════════════════════ */
+const ALPHABET_DATA = [
+  { letter: "A", word: "Apple",     emoji: "🍎", thai: "แอปเปิ้ล",   color: "#ef4444" },
+  { letter: "B", word: "Bear",      emoji: "🐻", thai: "หมี",         color: "#f97316" },
+  { letter: "C", word: "Cat",       emoji: "🐱", thai: "แมว",         color: "#eab308" },
+  { letter: "D", word: "Dog",       emoji: "🐶", thai: "สุนัข",       color: "#22c55e" },
+  { letter: "E", word: "Elephant",  emoji: "🐘", thai: "ช้าง",        color: "#14b8a6" },
+  { letter: "F", word: "Fish",      emoji: "🐟", thai: "ปลา",         color: "#3b82f6" },
+  { letter: "G", word: "Grapes",    emoji: "🍇", thai: "องุ่น",       color: "#8b5cf6" },
+  { letter: "H", word: "Hat",       emoji: "🎩", thai: "หมวก",        color: "#ec4899" },
+  { letter: "I", word: "Ice Cream", emoji: "🍦", thai: "ไอศกรีม",    color: "#f43f5e" },
+  { letter: "J", word: "Juice",     emoji: "🧃", thai: "น้ำผลไม้",   color: "#f97316" },
+  { letter: "K", word: "Kite",      emoji: "🪁", thai: "ว่าว",        color: "#84cc16" },
+  { letter: "L", word: "Lion",      emoji: "🦁", thai: "สิงโต",      color: "#eab308" },
+  { letter: "M", word: "Monkey",    emoji: "🐒", thai: "ลิง",         color: "#f97316" },
+  { letter: "N", word: "Nest",      emoji: "🪺", thai: "รัง",         color: "#22c55e" },
+  { letter: "O", word: "Orange",    emoji: "🍊", thai: "ส้ม",         color: "#f97316" },
+  { letter: "P", word: "Penguin",   emoji: "🐧", thai: "นกเพนกวิน",  color: "#06b6d4" },
+  { letter: "Q", word: "Queen",     emoji: "👸", thai: "ราชินี",      color: "#a855f7" },
+  { letter: "R", word: "Rainbow",   emoji: "🌈", thai: "รุ้ง",        color: "#ec4899" },
+  { letter: "S", word: "Sun",       emoji: "☀️", thai: "ดวงอาทิตย์", color: "#eab308" },
+  { letter: "T", word: "Tiger",     emoji: "🐯", thai: "เสือ",        color: "#f97316" },
+  { letter: "U", word: "Umbrella",  emoji: "☂️", thai: "ร่ม",         color: "#6366f1" },
+  { letter: "V", word: "Violin",    emoji: "🎻", thai: "ไวโอลิน",    color: "#8b5cf6" },
+  { letter: "W", word: "Watermelon",emoji: "🍉", thai: "แตงโม",      color: "#22c55e" },
+  { letter: "X", word: "Xylophone", emoji: "🎵", thai: "ระนาด",      color: "#ec4899" },
+  { letter: "Y", word: "Yacht",     emoji: "⛵", thai: "เรือใบ",      color: "#3b82f6" },
+  { letter: "Z", word: "Zebra",     emoji: "🦓", thai: "ม้าลาย",     color: "#8b5cf6" },
+];
 
-  const changeTab = (tab: "home" | "workout" | "character" | "leaderboard" | "profile") => {
-    setActiveTab(tab);
-    sfx.playClick();
-  };
+const VOCAB: Record<string, { word: string; emoji: string; thai: string; color: string }[]> = {
+  Animals: [
+    { word: "Cat",      emoji: "🐱", thai: "แมว",       color: "#f97316" },
+    { word: "Dog",      emoji: "🐶", thai: "สุนัข",     color: "#eab308" },
+    { word: "Bird",     emoji: "🐦", thai: "นก",         color: "#22c55e" },
+    { word: "Fish",     emoji: "🐟", thai: "ปลา",       color: "#3b82f6" },
+    { word: "Rabbit",   emoji: "🐰", thai: "กระต่าย",   color: "#ec4899" },
+    { word: "Tiger",    emoji: "🐯", thai: "เสือ",       color: "#f97316" },
+    { word: "Elephant", emoji: "🐘", thai: "ช้าง",       color: "#8b5cf6" },
+    { word: "Monkey",   emoji: "🐒", thai: "ลิง",        color: "#f59e0b" },
+  ],
+  Colors: [
+    { word: "Red",    emoji: "🔴", thai: "สีแดง",     color: "#ef4444" },
+    { word: "Blue",   emoji: "🔵", thai: "สีน้ำเงิน", color: "#3b82f6" },
+    { word: "Green",  emoji: "🟢", thai: "สีเขียว",   color: "#22c55e" },
+    { word: "Yellow", emoji: "🟡", thai: "สีเหลือง",  color: "#eab308" },
+    { word: "Orange", emoji: "🟠", thai: "สีส้ม",     color: "#f97316" },
+    { word: "Pink",   emoji: "🩷", thai: "สีชมพู",    color: "#ec4899" },
+    { word: "Purple", emoji: "🟣", thai: "สีม่วง",    color: "#a855f7" },
+    { word: "White",  emoji: "⬜", thai: "สีขาว",     color: "#94a3b8" },
+  ],
+  Food: [
+    { word: "Apple",  emoji: "🍎", thai: "แอปเปิ้ล", color: "#ef4444" },
+    { word: "Banana", emoji: "🍌", thai: "กล้วย",     color: "#eab308" },
+    { word: "Rice",   emoji: "🍚", thai: "ข้าว",      color: "#94a3b8" },
+    { word: "Egg",    emoji: "🥚", thai: "ไข่",        color: "#f59e0b" },
+    { word: "Milk",   emoji: "🥛", thai: "นม",         color: "#e2e8f0" },
+    { word: "Bread",  emoji: "🍞", thai: "ขนมปัง",    color: "#d97706" },
+    { word: "Cake",   emoji: "🎂", thai: "เค้ก",       color: "#ec4899" },
+    { word: "Pizza",  emoji: "🍕", thai: "พิซซ่า",    color: "#f97316" },
+  ],
+  Numbers: [
+    { word: "One",   emoji: "1️⃣", thai: "หนึ่ง",  color: "#ef4444" },
+    { word: "Two",   emoji: "2️⃣", thai: "สอง",     color: "#f97316" },
+    { word: "Three", emoji: "3️⃣", thai: "สาม",     color: "#eab308" },
+    { word: "Four",  emoji: "4️⃣", thai: "สี่",      color: "#22c55e" },
+    { word: "Five",  emoji: "5️⃣", thai: "ห้า",      color: "#06b6d4" },
+    { word: "Six",   emoji: "6️⃣", thai: "หก",       color: "#3b82f6" },
+    { word: "Seven", emoji: "7️⃣", thai: "เจ็ด",     color: "#8b5cf6" },
+    { word: "Eight", emoji: "8️⃣", thai: "แปด",      color: "#ec4899" },
+  ],
+};
 
-  const changeCharSubTab = (subTab: "status" | "quests" | "achievements") => {
-    setCharSubTab(subTab);
-    sfx.playClick();
-  };
+const QUIZ_QUESTIONS = [
+  { emoji:"🐱", prompt:"What animal is this?", choices:["Cat","Dog","Fish","Bird"],          answer:"Cat"      },
+  { emoji:"🍎", prompt:"What fruit is this?",   choices:["Banana","Apple","Orange","Mango"],  answer:"Apple"    },
+  { emoji:"🔴", prompt:"What color is this?",   choices:["Blue","Green","Red","Yellow"],      answer:"Red"      },
+  { emoji:"🐶", prompt:"What animal is this?",  choices:["Cat","Dog","Fish","Bird"],           answer:"Dog"      },
+  { emoji:"🍌", prompt:"What fruit is this?",   choices:["Apple","Orange","Mango","Banana"],  answer:"Banana"   },
+  { emoji:"🔵", prompt:"What color is this?",   choices:["Red","Blue","Green","Purple"],      answer:"Blue"     },
+  { emoji:"🐘", prompt:"What animal is this?",  choices:["Horse","Lion","Elephant","Tiger"],  answer:"Elephant" },
+  { emoji:"☀️", prompt:"What do you see?",      choices:["Moon","Star","Cloud","Sun"],        answer:"Sun"      },
+  { emoji:"🌈", prompt:"What is this?",         choices:["Cloud","Sky","Rain","Rainbow"],     answer:"Rainbow"  },
+  { emoji:"2️⃣", prompt:"What number is this?", choices:["One","Three","Two","Four"],         answer:"Two"      },
+];
 
-  // History states
-  const [workoutHistory, setWorkoutHistory] = useState<WorkoutLog[]>([]);
-  const [quests, setQuests] = useState<Quest[]>([]);
+/* ════════════════════════════════════════════════
+   HELPER COMPONENTS
+════════════════════════════════════════════════ */
+function StarBackground() {
+  const stars = Array.from({ length: 80 }, (_, i) => ({
+    id: i,
+    x: Math.random() * 100,
+    y: Math.random() * 100,
+    size: Math.random() * 2.5 + 0.5,
+    dur: (Math.random() * 3 + 2).toFixed(1),
+    delay: (Math.random() * 4).toFixed(1),
+  }));
+  return (
+    <div className="star-bg">
+      {stars.map(s => (
+        <div
+          key={s.id}
+          className="star-dot"
+          style={{ left:`${s.x}%`, top:`${s.y}%`, width:s.size, height:s.size, "--dur":`${s.dur}s`, "--delay":`${s.delay}s` } as React.CSSProperties}
+        />
+      ))}
+      {[
+        { color:"rgba(124,58,237,.12)", size:350, top:"5%",  left:"80%", anim:"18s" },
+        { color:"rgba(236,72,153,.10)", size:280, top:"55%", left:"5%",  anim:"22s" },
+        { color:"rgba(59,130,246,.10)", size:200, top:"75%", left:"70%", anim:"15s" },
+      ].map((orb,i) => (
+        <div key={i} className="absolute rounded-full" style={{ background:orb.color, width:orb.size, height:orb.size, top:orb.top, left:orb.left, filter:"blur(60px)", animation:`float ${orb.anim} ease-in-out infinite`, animationDelay:`${i*2}s` }} />
+      ))}
+    </div>
+  );
+}
 
-  // Cinematic Level Up animation state
-  const [levelUpVisible, setLevelUpVisible] = useState(false);
-  const [levelUpTarget, setLevelUpTarget] = useState(1);
-  const [workoutSaving, setWorkoutSaving] = useState(false);
-
-  // Solo Leveling Gates Opening States
-  const [gatesOpen, setGatesOpen] = useState(false);
-  const [gatesActive, setGatesActive] = useState(true);
-
-  useEffect(() => {
-    // Start sliding apart after 1200ms
-    const slideTimer = setTimeout(() => {
-      setGatesOpen(true);
-    }, 1200);
-
-    // Remove from DOM after transition completes
-    const removeTimer = setTimeout(() => {
-      setGatesActive(false);
-    }, 2800);
-
-    return () => {
-      clearTimeout(slideTimer);
-      clearTimeout(removeTimer);
-    };
-  }, []);
-
-  // Authenticate listener
-  useEffect(() => {
-    let unsubscribe: (() => void) | undefined;
-
-    const storedLastUser = localStorage.getItem("last_active_user_id");
-    if (storedLastUser && storedLastUser.startsWith("guest_")) {
-      loadUserProfile(storedLastUser);
-    } else {
-      unsubscribe = onAuthStateChanged(auth, async (user) => {
-        setAuthLoading(true);
-        if (user) {
-          localStorage.setItem("last_active_user_id", user.uid);
-          // Load Profile from Firestore
-          await loadUserProfile(user.uid);
-        } else {
-          setCurrentUser(null);
-          setAuthLoading(false);
-        }
-      });
+function ConfettiBlast({ trigger }: { trigger: number }) {
+  const [visible, setVisible] = React.useState(false);
+  React.useEffect(() => {
+    if (trigger > 0) {
+      setVisible(true);
+      const t = setTimeout(() => setVisible(false), 2600);
+      return () => clearTimeout(t);
     }
-
-    return () => {
-      if (unsubscribe) unsubscribe();
-    };
-  }, []);
-
-  // Listen to Workouts and Quests once user logs in
-  useEffect(() => {
-    if (!currentUser) {
-      setWorkoutHistory([]);
-      setQuests([]);
-      return;
-    }
-
-    if (currentUser.uid.startsWith("guest_")) {
-      // Load workouts & quests from local storage
-      const localWorkouts = localStorage.getItem(`workouts_${currentUser.uid}`);
-      setWorkoutHistory(localWorkouts ? JSON.parse(localWorkouts) : []);
-
-      const localQuests = localStorage.getItem(`quests_${currentUser.uid}`);
-      if (localQuests) {
-        setQuests(JSON.parse(localQuests));
-      } else {
-        const defaultQuests: Quest[] = [
-          {
-            id: "quest_1",
-            userId: currentUser.uid,
-            title: "First Awakening",
-            description: "Log any workout session to clear your first hunter threshold.",
-            type: "Any",
-            targetValue: 1,
-            currentValue: 0,
-            completed: false,
-            xpReward: 300,
-            createdAt: new Date().toISOString()
-          },
-          {
-            id: "quest_2",
-            userId: currentUser.uid,
-            title: "Path of Strength",
-            description: "Complete 15 total strength sets to level physical force.",
-            type: "Strength",
-            targetValue: 15,
-            currentValue: 0,
-            completed: false,
-            xpReward: 500,
-            createdAt: new Date().toISOString()
-          },
-          {
-            id: "quest_3",
-            userId: currentUser.uid,
-            title: "Speed Raider",
-            description: "Survive 30 minutes of Cardio drills.",
-            type: "Cardio",
-            targetValue: 30,
-            currentValue: 0,
-            completed: false,
-            xpReward: 400,
-            createdAt: new Date().toISOString()
-          }
-        ];
-        setQuests(defaultQuests);
-        localStorage.setItem(`quests_${currentUser.uid}`, JSON.stringify(defaultQuests));
-      }
-      return;
-    }
-
-    // Workouts dynamic listener
-    const workoutsRef = collection(db, `users/${currentUser.uid}/workouts`);
-    const unsubWorkouts = onSnapshot(workoutsRef, (snapshot) => {
-      const history: WorkoutLog[] = [];
-      snapshot.forEach((docSnap) => {
-        history.push(docSnap.data() as WorkoutLog);
-      });
-      setWorkoutHistory(history);
-    });
-
-    // Quests dynamic listener
-    const questsRef = collection(db, `users/${currentUser.uid}/quests`);
-    const unsubQuests = onSnapshot(questsRef, (snapshot) => {
-      const trials: Quest[] = [];
-      snapshot.forEach((docSnap) => {
-        trials.push(docSnap.data() as Quest);
-      });
-      setQuests(trials);
-    });
-
-    return () => {
-      unsubWorkouts();
-      unsubQuests();
-    };
-  }, [currentUser?.uid]);
-
-  // Load profile details
-  const loadUserProfile = async (uid: string) => {
-    try {
-      if (uid.startsWith("guest_")) {
-        const localProf = localStorage.getItem(`profile_${uid}`);
-        if (localProf) {
-          const profile = JSON.parse(localProf) as UserProfile;
-          if (profile.statPoints === undefined) {
-            profile.statPoints = 5;
-          }
-
-          // Check if user missed a day (skipped training daily system)
-          if (profile.lastWorkoutDate) {
-            const todayString = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
-            const lastDate = new Date(profile.lastWorkoutDate);
-            const todayDate = new Date(todayString);
-            const diffDays = Math.floor((todayDate.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24));
-
-            if (diffDays > 1 && !profile.debuffActive) {
-              // Trigger Penalty!
-              profile.debuffActive = true;
-              profile.debuffReason = "Penalty Active: Skip Daily Training Ritual! Complete 1 workout session of any category to break the exhaust debuff! (-150 XP)";
-              profile.xp = Math.max(profile.xp - 150, 0); // XP Penalty
-              profile.punishmentQuestActive = true;
-              profile.punishmentQuestProgress = 0;
-
-              localStorage.setItem(`profile_${uid}`, JSON.stringify(profile));
-
-              try {
-                // Trigger toxic system notification
-                const alertSp = new SpeechSynthesisUtterance("System warning. You have missed your ritual cycle. Penalty activated.");
-                alertSp.pitch = 0.45;
-                window.speechSynthesis.speak(alertSp);
-              } catch(e){}
-            }
-          }
-
-          setCurrentUser(profile);
-        }
-        setAuthLoading(false);
-        return;
-      }
-
-      const docRef = doc(db, "users", uid);
-      const docSnap = await getDoc(docRef);
-      if (docSnap.exists()) {
-        const profile = docSnap.data() as UserProfile;
-        if (profile.statPoints === undefined) {
-          profile.statPoints = 5;
-        }
-
-        // Check if user missed a day (skipped training daily system)
-        if (profile.lastWorkoutDate) {
-          const todayString = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
-          const lastDate = new Date(profile.lastWorkoutDate);
-          const todayDate = new Date(todayString);
-          const diffDays = Math.floor((todayDate.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24));
-
-          if (diffDays > 1 && !profile.debuffActive) {
-            // Trigger Penalty!
-            await updateDoc(docRef, {
-              debuffActive: true,
-              debuffReason: "Penalty Active: Skip Daily Training Ritual! Complete 1 workout session of any category to break the exhaust debuff!",
-              xp: Math.max(profile.xp - 150, 0), // XP Penalty
-              punishmentQuestActive: true,
-              punishmentQuestProgress: 0
-            });
-            profile.debuffActive = true;
-            profile.debuffReason = "Penalty Active: Skip Daily Training Ritual! Complete 1 workout session of any category to break the exhaust debuff!";
-            profile.xp = Math.max(profile.xp - 150, 0);
-            profile.punishmentQuestActive = true;
-            profile.punishmentQuestProgress = 0;
-
-            try {
-              // Trigger toxic system notification
-              const alertSp = new SpeechSynthesisUtterance("System warning. You have missed your ritual cycle. Penalty activated.");
-              alertSp.pitch = 0.45;
-              window.speechSynthesis.speak(alertSp);
-            } catch(e){}
-          }
-        }
-
-        setCurrentUser(profile);
-      }
-    } catch (err) {
-      console.error("Error loading user profile:", err);
-    } finally {
-      setAuthLoading(false);
-    }
-  };
-
-  const handleRefreshProfile = async () => {
-    if (currentUser) {
-      await loadUserProfile(currentUser.uid);
-    }
-  };
-
-  // Log Workout and trigger core leveling, stats, quests and streak updates
-  const handleLogWorkout = async (workout: {
-    exerciseName: string;
-    category: WorkoutCategory;
-    sets: number;
-    reps: number;
-    duration: number;
-    intensity: number;
-    xpGained: number;
-  }) => {
-    if (!currentUser) return;
-    setWorkoutSaving(true);
-
-    try {
-      const todayString = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
-      let newStreak = currentUser.streak;
-
-      // Calculate new streak
-      if (!currentUser.lastWorkoutDate) {
-        newStreak = 1;
-      } else if (currentUser.lastWorkoutDate === todayString) {
-        // Logged workout already today, keep streak the same
-      } else {
-        const lastDate = new Date(currentUser.lastWorkoutDate);
-        const todayDate = new Date(todayString);
-        const diffDays = Math.floor((todayDate.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24));
-
-        if (diffDays === 1) {
-          newStreak = currentUser.streak + 1; // Consecutive days
-        } else if (diffDays > 1) {
-          newStreak = 1; // Streak broken, resets to 1
-        }
-      }
-
-      // Check for Solo Leveling Boss Workout (Shadow extraction eligibility)
-      const totalReps = workout.sets * workout.reps;
-      const isBossWorkout = (totalReps >= 200) || (workout.duration >= 60);
-
-      const existingShadows = currentUser.shadows || [];
-      const updatedShadows = [...existingShadows];
-
-      if (isBossWorkout) {
-        const shadowPool = ["shadow_infantry", "tank", "iron", "igris", "tusk", "beru", "bellion"];
-        const nextExtract = shadowPool.find(s => !existingShadows.includes(s));
-        if (nextExtract) {
-          updatedShadows.push(nextExtract);
-
-          // Vocal announcement
-          try {
-            const extractSp = new SpeechSynthesisUtterance("Boss workout cleared. Arise. Reanimating shadow soldier soul.");
-            extractSp.pitch = 0.35;
-            extractSp.rate = 0.8;
-            window.speechSynthesis.speak(extractSp);
-          } catch(e){}
-        }
-      }
-
-      // Prepare Workout Log Document
-      const workoutId = Math.random().toString(36).substring(2, 11);
-      const logPayload: WorkoutLog = {
-        id: workoutId,
-        userId: currentUser.uid,
-        exerciseName: workout.exerciseName,
-        category: workout.category,
-        sets: workout.sets,
-        reps: workout.reps,
-        duration: workout.duration,
-        intensity: workout.intensity,
-        xpGained: workout.xpGained,
-        loggedAt: new Date().toISOString(),
-      };
-
-      // 2. Calculate Profile XP levels & stats adjustments
-      let totalXp = currentUser.xp + workout.xpGained;
-      let userLevel = currentUser.level;
-      let shouldLevelUpAnim = false;
-      let gainedStatPoints = 0;
-
-      // Level limit formula (1000 XP per level)
-      while (totalXp >= 1000) {
-        totalXp -= 1000;
-        userLevel += 1;
-        shouldLevelUpAnim = true;
-        gainedStatPoints += 5;
-      }
-
-      const finalStatPoints = (currentUser.statPoints || 0) + gainedStatPoints;
-
-      // Incremental stat gains based on workout category
-      const currentStats = { ...currentUser.stats };
-      if (workout.category === "Strength") {
-        currentStats.STR += 2;
-        currentStats.VIT += 1;
-      } else if (workout.category === "Cardio") {
-        currentStats.END += 2;
-        currentStats.AGI += 1;
-      } else if (workout.category === "Flexibility") {
-        currentStats.AGI += 2;
-        currentStats.VIT += 1;
-      } else if (workout.category === "Endurance") {
-        currentStats.VIT += 2;
-        currentStats.END += 1;
-      }
-
-      if (currentUser.uid.startsWith("guest_")) {
-        // Local Guest Workouts Logic
-        const currentLocalWorkouts = JSON.parse(localStorage.getItem(`workouts_${currentUser.uid}`) || "[]");
-        const updatedLocalWorkouts = [logPayload, ...currentLocalWorkouts];
-        localStorage.setItem(`workouts_${currentUser.uid}`, JSON.stringify(updatedLocalWorkouts));
-        setWorkoutHistory(updatedLocalWorkouts);
-
-        const updatedLocalProfile: UserProfile = {
-          ...currentUser,
-          xp: totalXp,
-          level: userLevel,
-          stats: currentStats,
-          statPoints: finalStatPoints,
-          streak: newStreak,
-          lastWorkoutDate: todayString,
-          shadows: updatedShadows,
-          debuffActive: false,
-          debuffReason: "",
-          punishmentQuestActive: false
-        };
-
-        if (currentUser.debuffActive) {
-          try {
-            const clearSp = new SpeechSynthesisUtterance("Punishment survived. Debuff enforcement cleared.");
-            clearSp.pitch = 0.55;
-            window.speechSynthesis.speak(clearSp);
-          } catch(e){}
-        }
-
-        localStorage.setItem(`profile_${currentUser.uid}`, JSON.stringify(updatedLocalProfile));
-        setCurrentUser(updatedLocalProfile);
-
-        if (shouldLevelUpAnim) {
-          try {
-            sfx.playLevelUp();
-          } catch(e){}
-        }
-
-        // Process Quest Goals locally
-        const updatedLocalQuests = quests.map(quest => {
-          if (quest.completed) return quest;
-
-          let increment = 0;
-          if (quest.type === workout.category || quest.type === "Any") {
-            if (workout.category === "Strength") {
-              increment = workout.sets;
-            } else {
-              increment = workout.duration;
-            }
-          }
-
-          if (increment > 0) {
-            return {
-              ...quest,
-              currentValue: quest.currentValue + increment
-            };
-          }
-          return quest;
-        });
-
-        localStorage.setItem(`quests_${currentUser.uid}`, JSON.stringify(updatedLocalQuests));
-        setQuests(updatedLocalQuests);
-
-        if (shouldLevelUpAnim) {
-          setLevelUpTarget(userLevel);
-          setLevelUpVisible(true);
-        }
-
-        setWorkoutSaving(false);
-        return;
-      }
-
-      const workoutDocRef = doc(db, `users/${currentUser.uid}/workouts`, workoutId);
-      await setDoc(workoutDocRef, logPayload);
-
-      // Update User Profile document (Clearing punishment and debuff dynamically if they were active!)
-      const userRef = doc(db, "users", currentUser.uid);
-      
-      const updateData: any = {
-        xp: totalXp,
-        level: userLevel,
-        stats: currentStats,
-        statPoints: finalStatPoints,
-        streak: newStreak,
-        lastWorkoutDate: todayString,
-        shadows: updatedShadows
-      };
-
-      if (currentUser.debuffActive) {
-        updateData.debuffActive = false;
-        updateData.debuffReason = "";
-        updateData.punishmentQuestActive = false;
-
-        try {
-          const clearSp = new SpeechSynthesisUtterance("Punishment survived. Debuff enforcement cleared.");
-          clearSp.pitch = 0.55;
-          window.speechSynthesis.speak(clearSp);
-        } catch(e){}
-      }
-
-      await updateDoc(userRef, updateData);
-
-
-      // 3. Process Quest Goals in client subcollection
-      quests.forEach(async (quest) => {
-        if (quest.completed) return;
-
-        let increment = 0;
-        if (quest.type === workout.category || quest.type === "Any") {
-          if (workout.category === "Strength") {
-            increment = workout.sets; // Weightlifters increment via completed sets
-          } else {
-            increment = workout.duration; // Cardio drills increment via minutes
-          }
-        }
-
-        if (increment > 0) {
-          const questRef = doc(db, `users/${currentUser.uid}/quests`, quest.id);
-          await updateDoc(questRef, {
-            currentValue: quest.currentValue + increment,
-          });
-        }
-      });
-
-      // Trigger cinematic Level Up Splash if leveled up
-      if (shouldLevelUpAnim) {
-        setLevelUpTarget(userLevel);
-        setLevelUpVisible(true);
-        try {
-          sfx.playLevelUp();
-        } catch(e){}
-      }
-
-      await loadUserProfile(currentUser.uid);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setWorkoutSaving(false);
-    }
-  };
-
-  // Claim quest bonus XP
-  const handleClaimQuest = async (quest: Quest) => {
-    if (!currentUser) return;
-    try {
-      try {
-        sfx.playQuestComplete();
-      } catch(e){}
-
-      let totalXp = currentUser.xp + quest.xpReward;
-      let userLevel = currentUser.level;
-      let shouldLevelUpAnim = false;
-      let gainedStatPoints = 0;
-
-      while (totalXp >= 1000) {
-        totalXp -= 1000;
-        userLevel += 1;
-        shouldLevelUpAnim = true;
-        gainedStatPoints += 5;
-      }
-
-      const finalStatPoints = (currentUser.statPoints || 0) + gainedStatPoints;
-
-      // Apply stat points bonus upon quest claim
-      const currentStats = { ...currentUser.stats };
-      currentStats.STR += 1;
-      currentStats.AGI += 1;
-      currentStats.END += 1;
-      currentStats.VIT += 1;
-
-      if (currentUser.uid.startsWith("guest_")) {
-        const updatedLocalQuests = quests.map(q => q.id === quest.id ? { ...q, completed: true } : q);
-        localStorage.setItem(`quests_${currentUser.uid}`, JSON.stringify(updatedLocalQuests));
-        setQuests(updatedLocalQuests);
-
-        const updatedLocalProfile: UserProfile = {
-          ...currentUser,
-          xp: totalXp,
-          level: userLevel,
-          stats: currentStats,
-          statPoints: finalStatPoints
-        };
-        localStorage.setItem(`profile_${currentUser.uid}`, JSON.stringify(updatedLocalProfile));
-        setCurrentUser(updatedLocalProfile);
-
-        if (shouldLevelUpAnim) {
-          setLevelUpTarget(userLevel);
-          setLevelUpVisible(true);
-          try {
-            sfx.playLevelUp();
-          } catch(e){}
-        }
-        return;
-      }
-
-      const userRef = doc(db, "users", currentUser.uid);
-
-      // Update Quest status
-      const questRef = doc(db, `users/${currentUser.uid}/quests`, quest.id);
-      await updateDoc(questRef, {
-        completed: true,
-      });
-
-      // Update user levels
-      await updateDoc(userRef, {
-        xp: totalXp,
-        level: userLevel,
-        stats: currentStats,
-        statPoints: finalStatPoints
-      });
-
-      if (shouldLevelUpAnim) {
-        setLevelUpTarget(userLevel);
-        setLevelUpVisible(true);
-        try {
-          sfx.playLevelUp();
-        } catch(e){}
-      }
-
-      await loadUserProfile(currentUser.uid);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const handleAllocateStat = async (stat: "STR" | "AGI" | "END" | "VIT") => {
-    if (!currentUser || !currentUser.statPoints || currentUser.statPoints <= 0) return;
-
-    const updatedStats = {
-      ...currentUser.stats,
-      [stat]: currentUser.stats[stat] + 1
-    };
-    const updatedStatPoints = currentUser.statPoints - 1;
-
-    try {
-      sfx.playStatAlloc();
-    } catch(e){}
-
-    if (currentUser.uid.startsWith("guest_")) {
-      const updatedLocalProfile: UserProfile = {
-        ...currentUser,
-        stats: updatedStats,
-        statPoints: updatedStatPoints
-      };
-      localStorage.setItem(`profile_${currentUser.uid}`, JSON.stringify(updatedLocalProfile));
-      setCurrentUser(updatedLocalProfile);
-      return;
-    }
-
-    try {
-      const userRef = doc(db, "users", currentUser.uid);
-      await updateDoc(userRef, {
-        stats: updatedStats,
-        statPoints: updatedStatPoints
-      });
-      await loadUserProfile(currentUser.uid);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  if (authLoading) {
-    return (
-      <div className="min-h-screen bg-[#0A0E1A] flex flex-col items-center justify-center text-gray-400 font-mono gap-3.5">
-        <Loader2 className="w-8 h-8 text-yellow-400 animate-spin" />
-        <span>Syncing Hero Data...</span>
+  }, [trigger]);
+  if (!visible) return null;
+  const pieces = Array.from({ length: 20 }, (_, i) => ({
+    id: i,
+    color: ["#f472b6","#fb923c","#facc15","#4ade80","#60a5fa","#a78bfa"][i % 6],
+    left: 25 + Math.random() * 50,
+    delay: Math.random() * .7,
+    dur: 1.6 + Math.random() * .8,
+    rot: Math.random() * 360,
+  }));
+  return (
+    <>
+      {pieces.map(p => (
+        <div key={p.id} className="confetti-piece" style={{ left:`${p.left}%`, background:p.color, animationDuration:`${p.dur}s`, animationDelay:`${p.delay}s`, transform:`rotate(${p.rot}deg)` }} />
+      ))}
+    </>
+  );
+}
+
+function SectionTitle({ emoji, title, sub }: { emoji:string; title:string; sub:string }) {
+  return (
+    <div className="text-center mb-8">
+      <div className="text-6xl mb-3 anim-float">{emoji}</div>
+      <h2 className="font-fredoka text-4xl md:text-5xl gradient-text mb-2">{title}</h2>
+      <p className="text-purple-300 text-lg font-semibold">{sub}</p>
+    </div>
+  );
+}
+
+function SoundIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="2.5" strokeLinecap="round">
+      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+      <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+      <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+    </svg>
+  );
+}
+
+/* ════════════════════════════════════════════════
+   HOME PAGE
+════════════════════════════════════════════════ */
+function HomePage({ onStart }: { onStart: () => void }) {
+  const features = [
+    { emoji:"🔤", label:"A-Z Alphabet", sub:"เรียนตัวอักษร",  color:"from-violet-600 to-purple-700" },
+    { emoji:"📚", label:"Vocabulary",   sub:"คำศัพท์น่ารู้",   color:"from-pink-500 to-rose-600"   },
+    { emoji:"🎮", label:"Fun Quiz",     sub:"ทดสอบความรู้",    color:"from-orange-400 to-amber-500" },
+    { emoji:"⭐", label:"My Stars",     sub:"ดาวของฉัน",       color:"from-emerald-500 to-teal-600" },
+  ];
+  return (
+    <div className="section-enter min-h-screen flex flex-col items-center justify-center px-4 py-10 relative">
+      <div className="text-center mb-10 relative">
+        <div
+          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-dashed border-purple-500/30 anim-spin-slow"
+          style={{ width:220, height:220, marginTop:-30 }}
+        />
+        <div className="text-[110px] leading-none mb-2 anim-float" style={{ filter:"drop-shadow(0 0 30px rgba(167,139,250,.8))" }}>🦉</div>
+        <div className="inline-flex items-center gap-2 bg-purple-500/20 border border-purple-400/30 rounded-full px-4 py-1 mb-4">
+          <span className="anim-wave inline-block">👋</span>
+          <span className="text-purple-200 font-bold text-sm">สวัสดี! Hello!</span>
+        </div>
+        <h1 className="font-fredoka text-6xl md:text-7xl lg:text-8xl mb-3">
+          <span className="gradient-text">KiddieLingo</span>
+        </h1>
+        <p className="text-xl md:text-2xl text-purple-200 font-bold mb-2">
+          เรียนภาษาอังกฤษสนุกๆ ✨
+        </p>
+        <p className="text-purple-300/80 text-base md:text-lg max-w-md mx-auto leading-relaxed">
+          สำหรับเด็กประถม ป.1 – ป.3<br/>
+          <span className="text-purple-400 text-sm">For Primary School Students</span>
+        </p>
       </div>
-    );
-  }
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl w-full mb-10">
+        {features.map((f, i) => (
+          <div
+            key={f.label}
+            className="glass rounded-2xl p-5 text-center cursor-pointer hover:scale-105 transition-all duration-300 group"
+            style={{ animationDelay:`${i*.1}s` }}
+            onClick={onStart}
+          >
+            <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${f.color} flex items-center justify-center text-2xl mx-auto mb-3 group-hover:scale-110 transition-transform`} style={{ boxShadow:"0 4px 20px rgba(0,0,0,.4)" }}>
+              {f.emoji}
+            </div>
+            <div className="text-white font-bold text-sm md:text-base">{f.label}</div>
+            <div className="text-purple-300 text-xs mt-1">{f.sub}</div>
+          </div>
+        ))}
+      </div>
+
+      <button
+        onClick={onStart}
+        className="font-fredoka text-2xl text-white px-10 py-4 rounded-2xl hover:scale-105 transition-transform duration-300"
+        style={{ background:"linear-gradient(135deg, #7c3aed, #ec4899, #f97316)", backgroundSize:"200% 200%", animation:"gradient-pan 3s ease infinite, pulse-glow 2.5s ease-in-out infinite", boxShadow:"0 8px 40px rgba(124,58,237,.6)" }}
+      >
+        Let's Start Learning! 🚀
+      </button>
+
+      <div className="fixed top-20 left-8  text-3xl anim-float2 opacity-40 pointer-events-none select-none">✨</div>
+      <div className="fixed top-32 right-10 text-4xl anim-float  opacity-30 pointer-events-none select-none" style={{animationDelay:"1s"}}>⭐</div>
+      <div className="fixed bottom-28 left-10 text-3xl anim-float2 opacity-35 pointer-events-none select-none" style={{animationDelay:"2s"}}>🌟</div>
+      <div className="fixed top-1/2 right-6  text-2xl anim-float  opacity-25 pointer-events-none select-none" style={{animationDelay:".5s"}}>💫</div>
+    </div>
+  );
+}
+
+/* ════════════════════════════════════════════════
+   ALPHABET PAGE
+════════════════════════════════════════════════ */
+function AlphabetPage({ onEarnStar }: { onEarnStar: () => void }) {
+  const [flipped, setFlipped] = useState<Set<string>>(new Set());
+  const [learned, setLearned] = useState<Set<string>>(new Set());
+
+  const toggle = (letter: string) => {
+    setFlipped(prev => {
+      const next = new Set(prev);
+      if (next.has(letter)) { next.delete(letter); }
+      else {
+        next.add(letter);
+        if (!learned.has(letter)) {
+          setLearned(l => new Set(l).add(letter));
+          onEarnStar();
+        }
+      }
+      return next;
+    });
+  };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white flex flex-col relative py-0 select-none">
-      {/* Particle background ember floating */}
-      <ParticleBackground />
+    <div className="section-enter px-4 py-8 max-w-5xl mx-auto">
+      <SectionTitle emoji="🔤" title="The Alphabet" sub="แตะการ์ดเพื่อเรียนรู้คำศัพท์ A–Z!" />
 
-      {/* Solo Leveling Dual Gates Opening Animation */}
-      {gatesActive && (
-        <div className="fixed inset-0 z-[999] pointer-events-none flex overflow-hidden">
-          {/* Left Door */}
-          <div
-            className="w-1/2 h-full border-r border-[#7B2FBE]/30 flex flex-col justify-center items-end pr-8 transition-transform duration-[1200ms] cubic-bezier(0.77, 0, 0.175, 1) pointer-events-auto shadow-[15px_0_30px_rgba(0,0,0,0.85)]"
-            style={{
-              transform: gatesOpen ? "translateX(-100%)" : "translateX(0%)",
-              backgroundImage: "radial-gradient(circle at right, #0F0A1E 0%, #030611 100%)"
-            }}
-          >
-            {/* Runes & Heavy Stone Gate texture */}
-            <div className="max-w-[180px] text-right font-mono space-y-3 opacity-60">
-              <div className="text-[10px] text-[#7B2FBE] tracking-widest font-bold">WARNING: INTEGRITY</div>
-              <p className="text-[8px] text-gray-500 font-bold tracking-tight">RITUAL_DOOR_01</p>
-              <div className="text-xs text-purple-400 font-extrabold leading-none tracking-widest select-none uppercase">
-                ARISE / ARISE / ARISE
+      <div className="glass rounded-2xl p-4 mb-8 max-w-sm mx-auto">
+        <div className="flex justify-between items-center mb-2">
+          <span className="text-purple-300 font-bold text-sm">ความก้าวหน้า / Progress</span>
+          <span className="text-white font-bold">{learned.size}/26</span>
+        </div>
+        <div className="h-3 bg-white/10 rounded-full overflow-hidden">
+          <div className="h-full rounded-full progress-fill" style={{ width:`${(learned.size/26)*100}%`, background:"linear-gradient(90deg,#7c3aed,#ec4899)" }} />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-3">
+        {ALPHABET_DATA.map((item, i) => (
+          <div key={item.letter} className="flip-card" style={{ height:120, animationDelay:`${i*.03}s` }} onClick={() => toggle(item.letter)}>
+            <div className={`flip-card-inner ${flipped.has(item.letter) ? "flipped" : ""}`}>
+              <div className="flip-card-front glass border-2" style={{ borderColor:learned.has(item.letter)?item.color:"rgba(255,255,255,.1)", boxShadow:learned.has(item.letter)?`0 0 20px ${item.color}55`:"none" }}>
+                <div className="font-fredoka text-5xl font-bold" style={{ color:item.color, textShadow:`0 0 20px ${item.color}88` }}>{item.letter}</div>
+                {learned.has(item.letter) && <div className="absolute top-2 right-2 text-sm">✅</div>}
+              </div>
+              <div className="flip-card-back" style={{ background:`linear-gradient(135deg,${item.color}ee,${item.color}88)` }}>
+                <div className="text-3xl mb-1">{item.emoji}</div>
+                <div className="text-white font-bold text-xs text-center px-1 leading-tight">{item.word}</div>
+                <div className="text-white/80 text-[10px] mt-0.5">{item.thai}</div>
               </div>
             </div>
           </div>
+        ))}
+      </div>
 
-          {/* Right Door */}
-          <div
-            className="w-1/2 h-full border-l border-[#00D4FF]/30 flex flex-col justify-center items-start pl-8 transition-transform duration-[1200ms] cubic-bezier(0.77, 0, 0.175, 1) pointer-events-auto shadow-[-15px_0_30px_rgba(0,0,0,0.85)]"
-            style={{
-              transform: gatesOpen ? "translateX(100%)" : "translateX(0%)",
-              backgroundImage: "radial-gradient(circle at left, #0A1424 0%, #030611 100%)"
-            }}
-          >
-            {/* Right Door graphics */}
-            <div className="max-w-[180px] text-left font-mono space-y-3 opacity-60">
-              <div className="text-[10px] text-[#00D4FF] tracking-widest font-bold font-mono">SYSTEM LOADING</div>
-              <p className="text-[8px] text-gray-500 font-bold tracking-tight">REALM_HUNTER_GATE_02</p>
-              <div className="text-xs text-cyan-400 font-extrabold leading-none tracking-widest select-none uppercase animate-pulse">
-                SYSTEM_LINK_ACTIVE
-              </div>
-            </div>
-          </div>
-
-          {/* S-Gate Rune Center Seal */}
-          <div
-            className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-28 h-28 rounded-full border-2 border-purple-500 bg-[#060A1A] flex items-center justify-center transition-all duration-700 pointer-events-auto shadow-[0_0_40px_rgba(123,47,190,0.5)] z-50 ${
-              gatesOpen ? "scale-0 opacity-0 rotate-180" : "scale-100 opacity-100"
-            }`}
-          >
-            <div className="absolute inset-1 border border-dashed border-cyan-400 rounded-full animate-spin" />
-            <span className="text-[#00D4FF] font-mono font-black text-xl tracking-wider select-none animate-pulse">
-              S-GATE
-            </span>
-          </div>
+      {learned.size === 26 && (
+        <div className="text-center mt-8 glass rounded-3xl p-8 border-2 border-yellow-400/30" style={{ boxShadow:"0 0 50px rgba(251,191,36,.2)" }}>
+          <div className="text-6xl mb-3">🏆</div>
+          <div className="font-fredoka text-3xl gradient-text">เก่งมาก! Excellent!</div>
+          <div className="text-purple-300 mt-2">คุณเรียน A–Z ครบหมดแล้ว! You learned all 26 letters!</div>
         </div>
       )}
+    </div>
+  );
+}
 
-      {/* Level Up splash render */}
-      {currentUser && (
-        <LevelUpSplash
-          isVisible={levelUpVisible}
-          newLevel={levelUpTarget}
-          characterClass={currentUser.characterClass}
-          onClose={() => setLevelUpVisible(false)}
-        />
-      )}
+/* ════════════════════════════════════════════════
+   VOCABULARY PAGE
+════════════════════════════════════════════════ */
+function VocabPage({ onEarnStar }: { onEarnStar: () => void }) {
+  const categories = ["Animals","Colors","Food","Numbers"] as const;
+  const catEmoji: Record<string,string> = { Animals:"🐾", Colors:"🎨", Food:"🍎", Numbers:"🔢" };
+  const [active, setActive] = useState("Animals");
+  const [known, setKnown] = useState<Set<string>>(new Set());
+  const [playing, setPlaying] = useState<string|null>(null);
 
-      {/* Main framed Smartphone layout mock to simulate native mobile experience */}
-      <div className="flex-1 flex justify-center items-stretch py-0 md:py-8 w-full z-10">
-        <div className="w-full max-w-md bg-[#0A0E1A] md:rounded-[40px] md:border-[10px] md:border-slate-800 shadow-[0_0_60px_rgba(123,47,190,0.15)] md:aspect-[9/19.5] flex flex-col relative overflow-hidden">
-          
-          {/* Mock Speaker/Camera Phone notch */}
-          <div className="hidden md:flex justify-center absolute top-2 left-1/2 -translate-x-1/2 w-32 h-6 bg-slate-800 rounded-b-2xl z-50">
-            <div className="w-12 h-1 bg-slate-900 rounded mt-1" />
-          </div>
+  const markKnown = (key: string) => {
+    if (!known.has(key)) {
+      setKnown(prev => new Set(prev).add(key));
+      onEarnStar();
+    }
+  };
+  const playWord = (key: string) => {
+    setPlaying(key);
+    setTimeout(() => setPlaying(null), 700);
+  };
 
-          {!currentUser ? (
-            <div className="flex-1 overflow-y-auto px-6 py-8 flex flex-col justify-center">
-              <AuthScreen onAuthSuccess={(user) => {
-                localStorage.setItem("last_active_user_id", user.uid);
-                setCurrentUser(user);
-              }} />
+  return (
+    <div className="section-enter px-4 py-8 max-w-5xl mx-auto">
+      <SectionTitle emoji="📚" title="Vocabulary" sub="คำศัพท์น่ารู้ — แตะเพื่อเรียนรู้และฝึกออกเสียง!" />
+
+      <div className="flex flex-wrap justify-center gap-3 mb-8">
+        {categories.map(cat => (
+          <button
+            key={cat}
+            onClick={() => setActive(cat)}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all duration-300 hover:scale-105"
+            style={active===cat
+              ? { background:"linear-gradient(135deg,#7c3aed,#ec4899)", color:"white", boxShadow:"0 4px 20px rgba(124,58,237,.5)", transform:"scale(1.05)" }
+              : { background:"rgba(255,255,255,.05)", border:"1px solid rgba(255,255,255,.1)", color:"#c4b5fd" }}
+          >
+            <span>{catEmoji[cat]}</span>{cat}
+          </button>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+        {VOCAB[active].map((item, i) => {
+          const key = `${active}-${item.word}`;
+          const isKnown = known.has(key);
+          const isPlaying = playing === key;
+          return (
+            <div
+              key={item.word}
+              className="glass rounded-2xl p-4 flex flex-col items-center gap-2 cursor-pointer group transition-all duration-300 hover:scale-105 relative overflow-hidden"
+              style={{ border:`2px solid ${isKnown?item.color+"88":"rgba(255,255,255,.08)"}`, boxShadow:isKnown?`0 0 25px ${item.color}33`:"none", animationDelay:`${i*.06}s` }}
+              onClick={() => { playWord(key); markKnown(key); }}
+            >
+              <div className="absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity rounded-2xl" style={{ background:item.color }} />
+              <div className={`text-5xl transition-transform duration-300 ${isPlaying?"scale-125":"group-hover:scale-110"}`}>{item.emoji}</div>
+              <div className="font-fredoka text-xl text-white text-center">{item.word}</div>
+              <div className="text-purple-300 text-sm">{item.thai}</div>
+              <button
+                className="flex items-center gap-1.5 bg-white/10 hover:bg-white/20 rounded-full px-3 py-1 text-xs text-purple-200 transition-all mt-1"
+                onClick={e => { e.stopPropagation(); playWord(key); }}
+              >
+                <SoundIcon /> ออกเสียง
+              </button>
+              {isKnown && (
+                <div className="absolute top-2 right-2 w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold" style={{ background:item.color }}>✓</div>
+              )}
+              {isPlaying && (
+                <div className="absolute inset-0 rounded-2xl border-2 animate-ping opacity-30" style={{ borderColor:item.color }} />
+              )}
             </div>
-          ) : (
-            <>
-              {/* Game HUD Bar header */}
-              <div className="px-5 pt-7 pb-4 bg-slate-950/90 border-b border-purple-550/20 flex justify-between items-center relative z-25">
-                <div className="flex items-center gap-2">
-                  <div className="w-1.5 h-6 bg-[#7B2FBE] rounded-full" />
-                  <span className="text-yellow-400 font-black font-sans uppercase tracking-widest text-sm">
-                    LevelFit
-                  </span>
-                </div>
+          );
+        })}
+      </div>
+      <div className="text-center mt-6 text-purple-300 font-bold">รู้จักแล้ว {known.size} คำ 🌟</div>
+    </div>
+  );
+}
 
-                <div className="flex items-center gap-3 font-mono">
-                  {/* SFX Audio Toggle */}
-                  <button
-                    onClick={() => {
-                      const state = sfx.toggle();
-                      setSfxEnabled(state);
-                      if (state) sfx.playClick();
-                    }}
-                    className={`p-1.5 rounded-full border transition-all cursor-pointer flex items-center justify-center ${
-                      sfxEnabled 
-                        ? "bg-purple-900/20 border-purple-500/35 text-purple-300 shadow-[0_0_8px_rgba(123,47,190,0.3)] hover:bg-purple-900/40"
-                        : "bg-slate-900 border-slate-800 text-gray-500 hover:text-gray-400"
-                    }`}
-                    title={sfxEnabled ? "System audio: ON" : "System audio: LOCKED"}
-                    style={{ minWidth: "32px", minHeight: "32px" }}
-                  >
-                    {sfxEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
-                  </button>
+/* ════════════════════════════════════════════════
+   QUIZ PAGE
+════════════════════════════════════════════════ */
+function QuizPage({ onEarnStar }: { onEarnStar: () => void }) {
+  const [qIndex, setQIndex] = useState(0);
+  const [selected, setSelected] = useState<string|null>(null);
+  const [score, setScore] = useState(0);
+  const [confetti, setConfetti] = useState(0);
+  const [history, setHistory] = useState<boolean[]>([]);
+  const [done, setDone] = useState(false);
 
-                  {/* Streak */}
-                  <div className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-900 border border-slate-800 rounded-full text-xs text-amber-500 font-bold">
-                    <Flame className="w-4 h-4 text-amber-500 animate-bounce" /> {currentUser.streak}d
-                  </div>
+  const q = QUIZ_QUESTIONS[qIndex];
 
-                  {/* Level text */}
-                  <div className="px-2.5 py-1 bg-gradient-to-r from-purple-950 to-slate-900 border border-[#7B2FBE]/30 rounded-full text-xs text-yellow-300 font-bold">
-                    Lv. {currentUser.level}
-                  </div>
-                </div>
-              </div>
+  const handleAnswer = (choice: string) => {
+    if (selected !== null) return;
+    setSelected(choice);
+    const ok = choice === q.answer;
+    setHistory(h => [...h, ok]);
+    if (ok) { setScore(s => s+1); setConfetti(c => c+1); onEarnStar(); }
+    setTimeout(() => {
+      if (qIndex+1 >= QUIZ_QUESTIONS.length) setDone(true);
+      else { setQIndex(qi => qi+1); setSelected(null); }
+    }, 1400);
+  };
 
-              {/* Central screen tab contents */}
-              <main className="flex-1 overflow-y-auto px-4 py-6 relative z-10 pb-20">
-                {activeTab === "home" && (
-                  <HomeOverview
-                    currentUser={currentUser}
-                    workoutHistory={workoutHistory}
-                    quests={quests}
-                    onNavigateToTab={(tab) => setActiveTab(tab)}
-                  />
-                )}
+  const restart = () => { setDone(false); setQIndex(0); setSelected(null); setScore(0); setHistory([]); };
 
-                {activeTab === "workout" && (
-                  <div className="space-y-6">
-                    <WorkoutLogger onLogWorkout={handleLogWorkout} isLogging={workoutSaving} workoutHistory={workoutHistory} />
-                  </div>
-                )}
+  const pct = Math.round((score / QUIZ_QUESTIONS.length) * 100);
+  const grade = pct>=90?{text:"Excellent! 🏆",color:"#fbbf24"}
+              : pct>=70?{text:"Very Good! 🌟",color:"#a78bfa"}
+              : pct>=50?{text:"Good Job! 👍",color:"#34d399"}
+              :         {text:"Keep Trying! 💪",color:"#f97316"};
 
-                {activeTab === "character" && (
-                  <div className="space-y-5">
-                    {/* Character sub-tabs */}
-                    <div className="grid grid-cols-3 p-1 bg-slate-950/80 border border-slate-800 rounded-xl gap-1">
-                      <button
-                        onClick={() => changeCharSubTab("status")}
-                        className={`py-2 text-[10px] font-black font-mono uppercase tracking-wider rounded-lg transition-all cursor-pointer text-center ${
-                          charSubTab === "status"
-                            ? "bg-purple-900/40 border border-purple-500/20 text-yellow-300 shadow"
-                            : "text-gray-500 hover:text-gray-300"
-                        }`}
-                        style={{ minHeight: "44px" }}
-                      >
-                        Status
-                      </button>
-                      <button
-                        onClick={() => changeCharSubTab("quests")}
-                        className={`py-2 text-[10px] font-black font-mono uppercase tracking-wider rounded-lg transition-all cursor-pointer text-center ${
-                          charSubTab === "quests"
-                            ? "bg-purple-900/40 border border-purple-500/20 text-yellow-300 shadow"
-                            : "text-gray-500 hover:text-gray-300"
-                        }`}
-                        style={{ minHeight: "44px" }}
-                      >
-                        Trials
-                      </button>
-                      <button
-                        onClick={() => changeCharSubTab("achievements")}
-                        className={`py-2 text-[10px] font-black font-mono uppercase tracking-wider rounded-lg transition-all cursor-pointer text-center ${
-                          charSubTab === "achievements"
-                            ? "bg-purple-900/40 border border-purple-500/20 text-yellow-300 shadow"
-                            : "text-gray-500 hover:text-gray-300"
-                        }`}
-                        style={{ minHeight: "44px" }}
-                      >
-                        Medals
-                      </button>
-                    </div>
+  if (done) return (
+    <div className="section-enter px-4 py-8 max-w-lg mx-auto flex flex-col items-center text-center">
+      <ConfettiBlast trigger={confetti} />
+      <div className="text-8xl mb-4 anim-float">{pct>=70?"🏆":"📝"}</div>
+      <h2 className="font-fredoka text-4xl mb-2" style={{ color:grade.color }}>{grade.text}</h2>
+      <p className="text-purple-300 text-lg mb-6">คุณได้ {score}/{QUIZ_QUESTIONS.length} คะแนน</p>
+      <div className="w-40 h-40 rounded-full flex flex-col items-center justify-center mb-8 text-white font-bold" style={{ background:`conic-gradient(${grade.color} ${pct*3.6}deg,rgba(255,255,255,.08) 0deg)`, boxShadow:`0 0 50px ${grade.color}44` }}>
+        <div className="font-fredoka text-5xl">{pct}%</div>
+        <div className="text-sm opacity-80">Score</div>
+      </div>
+      <div className="flex gap-2 mb-8 flex-wrap justify-center">
+        {history.map((ok,i) => (
+          <div key={i} className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold ${ok?"bg-emerald-500":"bg-red-500"}`}>{ok?"✓":"✗"}</div>
+        ))}
+      </div>
+      <button onClick={restart} className="font-fredoka text-xl text-white px-10 py-3 rounded-2xl hover:scale-105 transition-transform" style={{ background:"linear-gradient(135deg,#7c3aed,#ec4899)" }}>
+        เล่นอีกครั้ง! Play Again 🔄
+      </button>
+    </div>
+  );
 
-                    {charSubTab === "status" ? (
-                      <CharacterProfile 
-                        currentUser={currentUser} 
-                        workoutHistory={workoutHistory} 
-                        onRefreshProfile={handleRefreshProfile}
-                        onAllocateStat={handleAllocateStat}
-                      />
-                    ) : charSubTab === "quests" ? (
-                      <QuestsView
-                        currentUser={currentUser}
-                        workoutHistory={workoutHistory}
-                        onClaimQuest={handleClaimQuest}
-                        onRefreshProfile={handleRefreshProfile}
-                      />
-                    ) : (
-                      <AchievementsView
-                        currentUser={currentUser}
-                        workoutHistory={workoutHistory}
-                        onRefreshProfile={handleRefreshProfile}
-                      />
-                    )}
-                  </div>
-                )}
+  return (
+    <div className="section-enter px-4 py-8 max-w-lg mx-auto">
+      <SectionTitle emoji="🎮" title="Fun Quiz" sub="ทดสอบความรู้ของคุณ! Test your knowledge!" />
+      <ConfettiBlast trigger={confetti} />
 
-                {activeTab === "leaderboard" && (
-                  <LeaderboardView currentUser={currentUser} />
-                )}
+      <div className="flex justify-center gap-2 mb-6">
+        {QUIZ_QUESTIONS.map((_,i) => (
+          <div key={i} className="w-3 h-3 rounded-full transition-all duration-300" style={{ background:i<qIndex?"#10b981":i===qIndex?"#a78bfa":"rgba(255,255,255,.2)", boxShadow:i===qIndex?"0 0 10px #a78bfa":"none", transform:i===qIndex?"scale(1.3)":"scale(1)" }} />
+        ))}
+      </div>
 
-                {activeTab === "profile" && (
-                  <ProfileView
-                    currentUser={currentUser}
-                    onRefreshProfile={handleRefreshProfile}
-                    onLogout={async () => {
-                      if (currentUser.uid.startsWith("guest_")) {
-                        localStorage.removeItem("last_active_user_id");
-                        setCurrentUser(null);
-                      } else {
-                        localStorage.removeItem("last_active_user_id");
-                        await auth.signOut();
-                      }
-                    }}
-                  />
-                )}
-              </main>
+      <div className="flex justify-between items-center mb-6">
+        <div className="glass rounded-xl px-4 py-2 text-sm font-bold text-yellow-300">⭐ {score} stars</div>
+        <div className="glass rounded-xl px-4 py-2 text-sm font-bold text-purple-300">{qIndex+1}/{QUIZ_QUESTIONS.length}</div>
+      </div>
 
-              {/* Persistent Bottom Mobile Navigation Rail */}
-              <nav className="absolute bottom-0 left-0 right-0 h-16 bg-slate-950/95 border-t border-purple-550/15 flex justify-around items-stretch z-30 pb-safe px-2">
-                <button
-                  onClick={() => changeTab("home")}
-                  className={`flex flex-col items-center justify-center flex-1 cursor-pointer transition-colors ${
-                    activeTab === "home" ? "text-yellow-400" : "text-gray-500 hover:text-gray-300"
-                  }`}
-                  style={{ minWidth: "44px", minHeight: "44px" }}
-                >
-                  <CastleIcon className={`w-5 h-5 ${activeTab === "home" ? "scale-110" : ""}`} />
-                  <span className="text-[9px] font-bold tracking-widest uppercase font-mono mt-1">Home</span>
-                </button>
+      <div key={qIndex} className="glass rounded-3xl p-8 text-center mb-6 anim-bounce-in" style={{ border:"2px solid rgba(167,139,250,.2)", boxShadow:"0 0 40px rgba(124,58,237,.2)" }}>
+        <div className="text-8xl mb-4" style={{ filter:"drop-shadow(0 0 20px rgba(167,139,250,.5))" }}>{q.emoji}</div>
+        <p className="text-purple-200 font-bold text-xl">{q.prompt}</p>
+      </div>
 
-                <button
-                  onClick={() => changeTab("workout")}
-                  className={`flex flex-col items-center justify-center flex-1 cursor-pointer transition-colors ${
-                    activeTab === "workout" ? "text-yellow-400" : "text-gray-500 hover:text-gray-300"
-                  }`}
-                  style={{ minWidth: "44px", minHeight: "44px" }}
-                >
-                  <CrossedSwordsIcon className={`w-5 h-5 ${activeTab === "workout" ? "scale-110" : ""}`} />
-                  <span className="text-[9px] font-bold tracking-widest uppercase font-mono mt-1">Workout</span>
-                </button>
+      <div className="grid grid-cols-2 gap-3">
+        {q.choices.map(choice => {
+          const isSelected = selected===choice;
+          const isAnswer   = choice===q.answer;
+          const revealed   = selected!==null;
+          let extra = "";
+          if (revealed && isAnswer)              extra = " correct";
+          else if (revealed && isSelected)       extra = " wrong anim-shake";
+          return (
+            <button
+              key={choice}
+              disabled={selected!==null}
+              onClick={() => handleAnswer(choice)}
+              className={`quiz-opt${extra} glass rounded-2xl p-4 font-fredoka text-xl text-white border-2 transition-all duration-300`}
+              style={{ borderColor:"rgba(167,139,250,.2)" }}
+            >
+              {choice}
+              {revealed && isAnswer  && <span className="ml-2">✓</span>}
+              {revealed && isSelected && !isAnswer && <span className="ml-2">✗</span>}
+            </button>
+          );
+        })}
+      </div>
 
-                <button
-                  onClick={() => changeTab("character")}
-                  className={`flex flex-col items-center justify-center flex-1 cursor-pointer transition-colors ${
-                    activeTab === "character" ? "text-yellow-400" : "text-gray-500 hover:text-gray-300"
-                  }`}
-                  style={{ minWidth: "44px", minHeight: "44px" }}
-                >
-                  <HelmetIcon className={`w-5 h-5 ${activeTab === "character" ? "scale-110" : ""}`} />
-                  <span className="text-[9px] font-bold tracking-widest uppercase font-mono mt-1">Character</span>
-                </button>
+      {selected && (
+        <div className={`text-center mt-5 font-fredoka text-2xl anim-bounce-in ${selected===q.answer?"text-emerald-400":"text-red-400"}`}>
+          {selected===q.answer ? "🎉 ถูกต้อง! Correct!" : `❌ คำตอบที่ถูกคือ: ${q.answer}`}
+        </div>
+      )}
+    </div>
+  );
+}
 
-                <button
-                  onClick={() => changeTab("leaderboard")}
-                  className={`flex flex-col items-center justify-center flex-1 cursor-pointer transition-colors ${
-                    activeTab === "leaderboard" ? "text-yellow-400" : "text-gray-500 hover:text-gray-300"
-                  }`}
-                  style={{ minWidth: "44px", minHeight: "44px" }}
-                >
-                  <Trophy className={`w-5 h-5 ${activeTab === "leaderboard" ? "scale-110" : ""}`} />
-                  <span className="text-[9px] font-bold tracking-widest uppercase font-mono mt-1">Leader</span>
-                </button>
+/* ════════════════════════════════════════════════
+   PROGRESS PAGE
+════════════════════════════════════════════════ */
+function ProgressPage({ stars, alphabetDone, vocabDone }: { stars:number; alphabetDone:number; vocabDone:number }) {
+  const badges = [
+    { emoji:"🌟", name:"First Star",  earned:stars>=1,          desc:"ได้ดาวแรกแล้ว!" },
+    { emoji:"🔤", name:"ABC Hero",    earned:alphabetDone>=10,  desc:"เรียน 10 ตัวอักษร" },
+    { emoji:"📚", name:"Word Master", earned:vocabDone>=5,      desc:"รู้จัก 5 คำศัพท์" },
+    { emoji:"🌈", name:"Colorful",    earned:stars>=10,         desc:"ได้ 10 ดาว" },
+    { emoji:"🏆", name:"Champion",    earned:stars>=30,         desc:"ได้ 30 ดาว" },
+    { emoji:"🦉", name:"Wise Owl",    earned:alphabetDone>=26,  desc:"เรียน A–Z ครบ!" },
+  ];
 
-                <button
-                  onClick={() => changeTab("profile")}
-                  className={`flex flex-col items-center justify-center flex-1 cursor-pointer transition-colors ${
-                    activeTab === "profile" ? "text-yellow-400" : "text-gray-500 hover:text-gray-300"
-                  }`}
-                  style={{ minWidth: "44px", minHeight: "44px" }}
-                >
-                  <HunterMaskIcon className={`w-5 h-5 ${activeTab === "profile" ? "scale-110" : ""}`} />
-                  <span className="text-[9px] font-bold tracking-widest uppercase font-mono mt-1">Profile</span>
-                </button>
-              </nav>
-            </>
-          )}
+  return (
+    <div className="section-enter px-4 py-8 max-w-2xl mx-auto">
+      <SectionTitle emoji="⭐" title="My Stars" sub="ความก้าวหน้าของฉัน / My Progress" />
 
+      <div className="glass rounded-3xl p-8 text-center mb-8" style={{ border:"2px solid rgba(251,191,36,.3)", boxShadow:"0 0 50px rgba(251,191,36,.15)" }}>
+        <div className="font-fredoka text-8xl text-yellow-300 mb-1" style={{ textShadow:"0 0 30px rgba(251,191,36,.8)" }}>{stars}</div>
+        <div className="text-yellow-200 font-bold text-xl">ดาวทั้งหมด ⭐</div>
+        <div className="text-purple-300 text-sm mt-1">Total Stars Earned</div>
+      </div>
+
+      <div className="space-y-4 mb-8">
+        {[
+          { label:"ตัวอักษร A–Z",  emoji:"🔤", value:alphabetDone,            max:26, color:"#a78bfa" },
+          { label:"คำศัพท์",        emoji:"📚", value:vocabDone,               max:32, color:"#f472b6" },
+          { label:"ดาวสะสม",        emoji:"⭐", value:Math.min(stars,50),      max:50, color:"#fbbf24" },
+        ].map(bar => (
+          <div key={bar.label} className="glass rounded-2xl p-4">
+            <div className="flex justify-between mb-2">
+              <span className="text-white font-bold text-sm">{bar.emoji} {bar.label}</span>
+              <span className="text-purple-300 font-bold text-sm">{bar.value}/{bar.max}</span>
+            </div>
+            <div className="h-4 bg-white/10 rounded-full overflow-hidden">
+              <div className="h-full rounded-full progress-fill" style={{ width:`${Math.min((bar.value/bar.max)*100,100)}%`, background:`linear-gradient(90deg,${bar.color},${bar.color}88)`, boxShadow:`0 0 10px ${bar.color}66` }} />
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <h3 className="font-fredoka text-2xl text-center text-purple-300 mb-4">🏅 Badges & Achievements</h3>
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+        {badges.map(b => (
+          <div key={b.name} className="glass rounded-2xl p-4 text-center transition-all duration-300" style={{ border:`2px solid ${b.earned?"rgba(251,191,36,.5)":"rgba(255,255,255,.05)"}`, boxShadow:b.earned?"0 0 25px rgba(251,191,36,.2)":"none", opacity:b.earned?1:.45 }}>
+            <div className={`text-4xl mb-2 ${b.earned?"anim-float":""}`}>{b.emoji}</div>
+            <div className={`font-bold text-sm ${b.earned?"text-yellow-300":"text-purple-400"}`}>{b.name}</div>
+            <div className="text-purple-400 text-xs mt-1">{b.desc}</div>
+            {b.earned && <div className="text-yellow-400 text-xs mt-1 font-bold">✅ ได้รับแล้ว!</div>}
+          </div>
+        ))}
+      </div>
+
+      <div className="text-center mt-8 glass rounded-2xl p-5">
+        <div className="text-4xl mb-2">{stars>=30?"🏆":stars>=15?"🌟":stars>=5?"👍":"💪"}</div>
+        <div className="font-fredoka text-xl text-white">
+          {stars>=30?"เก่งมาก! You're a Champion!":stars>=15?"ดีมากเลย! Great Progress!":stars>=5?"เดินหน้าต่อไป! Keep Going!":"เริ่มต้นเลย! Let's Begin!"}
+        </div>
+        <div className="text-purple-300 text-sm mt-1">
+          {stars>=30?"คุณทำได้ยอดเยี่ยมมาก! 🎊":`อีก ${Math.max(0,30-stars)} ดาว ถึงจะได้รับรางวัล Champion! 🏆`}
         </div>
       </div>
     </div>
   );
 }
 
-// Hand-drawn custom vector icons matching the dark fantasy Solo Leveling request scope
-function CastleIcon(props: React.SVGProps<SVGSVGElement>) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" {...props}>
-      <path d="M22 20v-9H2v9" />
-      <path d="M18 11V4h-3v3h-2V4h-3v3H8V4H5v7" />
-      <path d="M11 20v-4a1 1 0 0 1 1-1h0a1 1 0 0 1 1 1v4" />
-    </svg>
-  );
-}
+/* ════════════════════════════════════════════════
+   MAIN APP
+════════════════════════════════════════════════ */
+type Tab = "home"|"alphabet"|"vocab"|"quiz"|"progress";
 
-function CrossedSwordsIcon(props: React.SVGProps<SVGSVGElement>) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" {...props}>
-      <polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5" />
-      <line x1="13" y1="19" x2="19" y2="13" />
-      <line x1="16" y1="16" x2="20" y2="20" />
-      <line x1="19" y1="21" x2="21" y2="19" />
-      <polyline points="14.5 6.5 21 13" />
-      <polyline points="9.5 17.5 3 11" />
-    </svg>
-  );
-}
+const NAV = [
+  { id:"home"     as Tab, emoji:"🏠", label:"Home"  },
+  { id:"alphabet" as Tab, emoji:"🔤", label:"A-Z"   },
+  { id:"vocab"    as Tab, emoji:"📚", label:"Words" },
+  { id:"quiz"     as Tab, emoji:"🎮", label:"Quiz"  },
+  { id:"progress" as Tab, emoji:"⭐", label:"Stars" },
+];
 
-function HelmetIcon(props: React.SVGProps<SVGSVGElement>) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" {...props}>
-      <path d="M2 11c0 5 4 10 10 10s10-5 10-10C22 6 18 2 12 2S2 6 2 11z" />
-      <path d="M12 2v9" />
-      <path d="M5 11h14" strokeWidth="2" />
-      <path d="M9 11v5" />
-      <path d="M15 11v5" />
-    </svg>
-  );
-}
+export default function App() {
+  const [tab, setTab]               = useState<Tab>("home");
+  const [stars, setStars]           = useState(0);
+  const [alphabetDone, setAlphabetDone] = useState(0);
+  const [vocabDone, setVocabDone]   = useState(0);
+  const [bursts, setBursts]         = useState<{id:number; x:number; y:number}[]>([]);
+  const nextId = useRef(0);
 
-function HunterMaskIcon(props: React.SVGProps<SVGSVGElement>) {
+  const earnStar = useCallback(() => {
+    setStars(s => s+1);
+    const id = ++nextId.current;
+    const x = 50 + (Math.random()-0.5)*40;
+    const y = 40 + (Math.random()-0.5)*30;
+    setBursts(b => [...b, { id, x, y }]);
+    setTimeout(() => setBursts(b => b.filter(s => s.id!==id)), 1000);
+  }, []);
+
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" {...props}>
-      <path d="M4 10l2-6h12l2 6v6c0 3-3 5-8 5s-8-2-8-5v-6z" />
-      {/* Eye cuts glowing details */}
-      <path d="M7 10l3 1.5" />
-      <path d="M17 10l-3 1.5" />
-      <path d="M12 11v3" />
-    </svg>
+    <div className="bg-animated min-h-screen relative">
+      <StarBackground />
+
+      {/* Star burst FX */}
+      {bursts.map(b => (
+        <div key={b.id} className="star-burst" style={{ left:`${b.x}%`, top:`${b.y}%` }}>⭐</div>
+      ))}
+
+      {/* ── TOP NAVBAR ── */}
+      <nav className="sticky top-0 z-50 glass border-b border-white/10">
+        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
+          <button onClick={() => setTab("home")} className="flex items-center gap-2 group">
+            <span className="text-3xl group-hover:scale-110 transition-transform anim-float">🦉</span>
+            <span className="font-fredoka text-xl gradient-text hidden sm:inline">KiddieLingo</span>
+          </button>
+
+          {/* Desktop links */}
+          <div className="hidden md:flex items-center gap-1">
+            {NAV.map(item => (
+              <button
+                key={item.id}
+                onClick={() => setTab(item.id)}
+                className={`nav-item flex flex-col items-center px-4 py-2 rounded-xl font-bold text-sm transition-all duration-200 ${tab===item.id?"text-white":"text-purple-400 hover:text-purple-200"}`}
+                style={tab===item.id?{background:"linear-gradient(135deg,rgba(124,58,237,.4),rgba(236,72,153,.2))"}:{}}
+              >
+                <span className="text-xl mb-0.5">{item.emoji}</span>
+                <span className="text-xs">{item.label}</span>
+              </button>
+            ))}
+          </div>
+
+          {/* Star counter */}
+          <div className="flex items-center gap-2 glass rounded-xl px-4 py-2 cursor-pointer hover:scale-105 transition-transform" onClick={() => setTab("progress")} style={{ boxShadow:stars>0?"0 0 20px rgba(251,191,36,.3)":"none" }}>
+            <span className="text-xl">⭐</span>
+            <span className="font-fredoka text-xl text-yellow-300">{stars}</span>
+          </div>
+        </div>
+      </nav>
+
+      {/* ── CONTENT ── */}
+      <main className="relative z-10 pb-24 md:pb-8">
+        {tab==="home"     && <HomePage     onStart={() => setTab("alphabet")} />}
+        {tab==="alphabet" && <AlphabetPage onEarnStar={() => { earnStar(); setAlphabetDone(d => d+1); }} />}
+        {tab==="vocab"    && <VocabPage    onEarnStar={() => { earnStar(); setVocabDone(d => d+1); }} />}
+        {tab==="quiz"     && <QuizPage     onEarnStar={earnStar} />}
+        {tab==="progress" && <ProgressPage stars={stars} alphabetDone={alphabetDone} vocabDone={vocabDone} />}
+      </main>
+
+      {/* ── BOTTOM NAV (mobile) ── */}
+      <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden" style={{ background:"rgba(10,6,24,.92)", backdropFilter:"blur(16px)", borderTop:"1px solid rgba(255,255,255,.08)" }}>
+        <div className="flex justify-around items-center px-2 py-2">
+          {NAV.map(item => (
+            <button
+              key={item.id}
+              onClick={() => setTab(item.id)}
+              className={`nav-item flex flex-col items-center py-1 px-3 rounded-xl transition-all duration-200 ${tab===item.id?"text-white":"text-purple-500"}`}
+              style={tab===item.id?{background:"rgba(124,58,237,.25)"}:{}}
+            >
+              <span className="text-2xl">{item.emoji}</span>
+              <span className="text-[10px] font-bold mt-0.5">{item.label}</span>
+            </button>
+          ))}
+        </div>
+      </nav>
+    </div>
   );
 }
