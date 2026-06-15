@@ -4,6 +4,7 @@ import { getDayPlan, TOTAL_DAYS, SUCCESS_THRESHOLD } from "../data/transformatio
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import { sfx } from "../utils/audio";
+import { HunterHero } from "./HunterHero";
 import {
   Dumbbell,
   Salad,
@@ -13,7 +14,7 @@ import {
   Check,
   Trophy,
   Camera,
-  ChevronRight,
+  ImagePlus,
   Moon,
   Wind,
   Footprints,
@@ -77,8 +78,10 @@ export function TransformationView({ currentUser, onReward, onLockChange }: Tran
   const [loading, setLoading] = useState(true);
   const [selectedDay, setSelectedDay] = useState(1);
   const [notice, setNotice] = useState<string | null>(null);
+  const [heroImage, setHeroImage] = useState<string | null>(null);
   const beforeInputRef = useRef<HTMLInputElement>(null);
   const afterInputRef = useRef<HTMLInputElement>(null);
+  const heroInputRef = useRef<HTMLInputElement>(null);
   const noticeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const showNotice = (msg: string) => {
@@ -92,6 +95,29 @@ export function TransformationView({ currentUser, onReward, onLockChange }: Tran
 
   const isGuest = currentUser.uid.startsWith("guest_");
   const storageKey = `transformation_${currentUser.uid}`;
+  const heroKey = `heroImage_${currentUser.uid}`;
+
+  // Custom hero image is kept on-device only (never committed / never uploaded to the cloud)
+  useEffect(() => {
+    try {
+      setHeroImage(localStorage.getItem(heroKey));
+    } catch (e) {}
+  }, [currentUser.uid]);
+
+  const handleHeroPhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const dataUrl = await downscaleImage(file, 900);
+      localStorage.setItem(heroKey, dataUrl);
+      setHeroImage(dataUrl);
+      sfx.playClick();
+    } catch (err) {
+      console.error("hero photo error", err);
+    } finally {
+      e.target.value = "";
+    }
+  };
 
   // Load persisted state
   useEffect(() => {
@@ -261,38 +287,44 @@ export function TransformationView({ currentUser, onReward, onLockChange }: Tran
     return (
       <div className="space-y-6">
         <SLStyles />
-        <div className="relative -mx-4 -mt-6 px-6 pt-10 pb-8 overflow-hidden">
-          {/* soft purple aura */}
-          <div className="absolute inset-0 bg-gradient-to-b from-[#3A2C5E]/60 via-[#241B38]/40 to-transparent pointer-events-none" />
-          <div className="absolute top-6 left-1/2 -translate-x-1/2 w-48 h-48 rounded-full bg-[#7C5FC0]/30 blur-3xl pointer-events-none" />
 
-          <div className="relative z-10 text-center">
-            <div className="relative w-20 h-20 mx-auto mb-6 flex items-center justify-center">
-              <div className="absolute w-20 h-20 border border-[#C9B8F0]/30 rounded-full animate-[spin_16s_linear_infinite]" />
-              <div className="w-12 h-12 rounded-full bg-[#1E1730]/80 border border-[#C9B8F0]/40 flex items-center justify-center shadow-[0_0_30px_rgba(124,95,192,0.5)]">
-                <Sparkles className="w-5 h-5 text-[#C9B8F0]" />
-              </div>
-            </div>
+        {/* AWAKEN hero — character art (top) fading into text + CTA (bottom) */}
+        <div className="relative -mx-4 -mt-6 h-[460px] overflow-hidden">
+          {/* hero art: custom image if provided, else original SVG hunter */}
+          {heroImage ? (
+            <img src={heroImage} alt="hero" className="absolute inset-0 w-full h-full object-cover object-top" />
+          ) : (
+            <HunterHero className="absolute inset-0 w-full h-full" />
+          )}
 
-            <p className="font-monument text-[11px] tracking-[0.45em] text-[#C9B8F0]/70 uppercase mb-3">
-              Awaken
-            </p>
-            <h2 className="font-display text-4xl leading-[1.05] text-[#EDE6FA] font-semibold">
+          {/* gradient fade to dark at the bottom */}
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#1B1528]/40 to-[#0A0E1A] pointer-events-none" />
+
+          {/* change-hero button */}
+          <button
+            onClick={() => heroInputRef.current?.click()}
+            className="absolute top-3 right-3 z-20 frost rounded-full px-3 py-1.5 flex items-center gap-1.5 text-[10px] text-[#C7BBE2] cursor-pointer"
+          >
+            <ImagePlus className="w-3 h-3" /> เปลี่ยนรูป
+          </button>
+          <input ref={heroInputRef} type="file" accept="image/*" className="hidden" onChange={handleHeroPhoto} />
+
+          {/* text + CTA */}
+          <div className="absolute inset-x-0 bottom-0 px-6 pb-7 z-10">
+            <p className="font-monument text-[11px] tracking-[0.45em] text-[#C9B8F0]/80 uppercase mb-2">Awaken</p>
+            <h2 className="font-display text-[42px] leading-[0.95] text-[#EDE6FA] font-semibold drop-shadow-[0_2px_12px_rgba(0,0,0,0.7)]">
               YOUR
               <br />
               <span className="text-[#C9B8F0]">AWAKENING</span>
               <br />
               BEGINS NOW
             </h2>
-            <p className="text-[13px] text-[#9A8FB8] mt-4 leading-relaxed font-light">
-              เดินตามเส้นทางของคุณ · ลงมือทำ · พิชิต
-              <br />
-              ปั้นร่างทองใน 21 วัน
+            <p className="text-[13px] text-[#C7BBE2] mt-3 leading-relaxed font-light">
+              เดินตามเส้นทางของคุณ · ลงมือทำ · พิชิต · ปั้นร่างทองใน 21 วัน
             </p>
-
             <button
               onClick={handleStart}
-              className="w-full mt-7 py-3.5 bg-[#B9A3E3] hover:bg-[#C7B5EC] text-[#241B3A] font-semibold text-base rounded-full transition-colors cursor-pointer shadow-[0_8px_30px_rgba(185,163,227,0.3)]"
+              className="w-full mt-5 py-3.5 bg-[#B9A3E3] hover:bg-[#C7B5EC] text-[#241B3A] font-semibold text-base rounded-full transition-colors cursor-pointer shadow-[0_8px_30px_rgba(185,163,227,0.35)]"
               style={{ minHeight: "52px" }}
             >
               Get Started
