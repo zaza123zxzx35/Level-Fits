@@ -1,31 +1,33 @@
 import React, { useState, useEffect } from "react";
-import { UserProfile, WorkoutLog, Quest } from "../types";
-import { 
-  Dumbbell, 
-  Flame, 
-  Award, 
-  Star, 
-  History, 
-  Sparkles, 
-  Clock, 
-  Sword, 
-  ShieldAlert, 
-  Activity, 
+import { UserProfile, WorkoutLog, Quest, TransformationState } from "../types";
+import {
+  Dumbbell,
+  Flame,
+  Award,
+  Star,
+  History,
+  Sparkles,
+  Clock,
+  Sword,
+  ShieldAlert,
+  Activity,
   Zap,
   CheckCircle,
   TrendingUp,
   Skull,
-  Terminal
+  Terminal,
+  ChevronRight
 } from "lucide-react";
 import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import { getHunterRank, RANK_METADATA } from "../utils/rankUtils";
+import { getDayPlan, TOTAL_DAYS } from "../data/transformationProgram";
 
 interface HomeOverviewProps {
   currentUser: UserProfile;
   workoutHistory: WorkoutLog[];
   quests: Quest[];
-  onNavigateToTab: (tab: "workout" | "character" | "profile") => void;
+  onNavigateToTab: (tab: "transformation" | "workout" | "character" | "profile") => void;
 }
 
 interface GuildBoss {
@@ -52,6 +54,30 @@ export function HomeOverview({ currentUser, workoutHistory, quests, onNavigateTo
 
   const hunterRank = getHunterRank(currentUser.level);
   const rankStyle = RANK_METADATA[hunterRank];
+
+  // 21-Day Transformation summary (read-only snapshot for the Home card)
+  const [tf, setTf] = useState<TransformationState | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    const loadTf = async () => {
+      try {
+        if (currentUser.uid.startsWith("guest_")) {
+          const raw = localStorage.getItem(`transformation_${currentUser.uid}`);
+          if (!cancelled) setTf(raw ? JSON.parse(raw) : null);
+        } else {
+          const ref = doc(db, `users/${currentUser.uid}/soloLeveling`, "transformation");
+          const snap = await getDoc(ref);
+          if (!cancelled) setTf(snap.exists() ? (snap.data() as TransformationState) : null);
+        }
+      } catch (e) {
+        if (!cancelled) setTf(null);
+      }
+    };
+    loadTf();
+    return () => {
+      cancelled = true;
+    };
+  }, [currentUser.uid]);
 
   // Guild Boss State
   const [boss, setBoss] = useState<GuildBoss>({
@@ -345,6 +371,85 @@ export function HomeOverview({ currentUser, workoutHistory, quests, onNavigateTo
           </p>
         </div>
       </div>
+
+      {/* 21-DAY TRANSFORMATION SUMMARY */}
+      {(() => {
+        if (!tf?.startDate) {
+          return (
+            <button
+              onClick={() => onNavigateToTab("transformation")}
+              className="w-full text-left p-5 frost rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.4)] flex items-center gap-4 cursor-pointer hover:bg-white/[0.06] transition-colors"
+            >
+              <div className="w-10 h-10 rounded-full border border-[#C9B8F0]/40 bg-[#1E1730] flex items-center justify-center shrink-0">
+                <Sparkles className="w-5 h-5 text-[#C9B8F0]" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-monument text-[10px] tracking-[0.35em] text-[#C9B8F0]/60 uppercase">Awaken</p>
+                <p className="font-display text-lg text-[#EDE6FA]">เริ่มโปรแกรม 21 วัน</p>
+              </div>
+              <ChevronRight className="w-5 h-5 text-[#9A8FB8] shrink-0" />
+            </button>
+          );
+        }
+        const startMs = new Date(tf.startDate + "T00:00:00").getTime();
+        const todayMs = new Date(new Date().toISOString().split("T")[0] + "T00:00:00").getTime();
+        const raw = Math.floor((todayMs - startMs) / 86400000) + 1;
+        const currentDay = Math.min(Math.max(raw, 1), TOTAL_DAYS);
+        const over = raw > TOTAL_DAYS;
+        const comps = tf.completions || {};
+        const passed = Object.keys(comps).filter((k) => comps[Number(k)]?.workout).length;
+        const pct = Math.round((passed / TOTAL_DAYS) * 100);
+        const today = comps[currentDay] || { workout: false, nutrition: false, skincare: false };
+        const pillars = [
+          { label: "ออกกำลัง", done: today.workout },
+          { label: "อาหาร", done: today.nutrition },
+          { label: "สกินแคร์", done: today.skincare },
+        ];
+        return (
+          <button
+            onClick={() => onNavigateToTab("transformation")}
+            className="w-full text-left p-5 frost rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.4)] cursor-pointer hover:bg-white/[0.06] transition-colors"
+          >
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <p className="font-monument text-[10px] tracking-[0.35em] text-[#C9B8F0]/60 uppercase">
+                  Awaken · 21-Day
+                </p>
+                <p className="font-display text-lg text-[#EDE6FA]">
+                  {over ? "ครบ 21 วันแล้ว" : `Day ${currentDay} / 21`}
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="font-display text-2xl text-[#C9B8F0]">{pct}%</span>
+                <ChevronRight className="w-5 h-5 text-[#9A8FB8]" />
+              </div>
+            </div>
+            <div className="h-2 w-full bg-[#15101F] rounded-full overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-[#7C5FC0] to-[#C9B8F0] rounded-full transition-all"
+                style={{ width: `${pct}%` }}
+              />
+            </div>
+            {!over && (
+              <div className="mt-3 flex gap-2">
+                {pillars.map((p) => (
+                  <span
+                    key={p.label}
+                    className={`flex-1 flex items-center justify-center gap-1 py-1 rounded-lg text-[10px] border ${
+                      p.done
+                        ? "bg-[#3A2F58]/60 border-[#C9B8F0]/40 text-[#C9B8F0]"
+                        : "bg-[#15101F] border-white/10 text-[#9A8FB8]"
+                    }`}
+                  >
+                    {p.done ? <CheckCircle className="w-3 h-3" /> : <span className="w-3 h-3 rounded-full border border-current inline-block" />}
+                    {p.label}
+                  </span>
+                ))}
+              </div>
+            )}
+          </button>
+        );
+      })()}
 
       {/* GUILD RAID BOSS STATUS WIDGET */}
       <div className="p-5 frost rounded-2xl relative shadow-[0_8px_30px_rgba(0,0,0,0.4)] overflow-hidden">
