@@ -87,4 +87,6 @@ export interface TransformationState {
   completions: { [day: number]: TransformationDayDone };
   beforePhoto?: string | null; // downscaled data URL (Day 0 mirror shot)
   afterPhoto?: string | null; // downscaled data URL (Day 21 reveal)
+  disciplineLock?: boolean; // Duolingo-style hard lock until today's ritual is done
+  finalClaimed?: boolean; // Day-21 final boss reward claimed
 }

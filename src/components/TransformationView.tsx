@@ -9,6 +9,7 @@ import {
   Salad,
   Sparkles,
   Lock,
+  Unlock,
   Check,
   Flame,
   Trophy,
@@ -17,11 +18,22 @@ import {
   Moon,
   Wind,
   Footprints,
+  Skull,
+  Zap,
 } from "lucide-react";
 
 interface TransformationViewProps {
   currentUser: UserProfile;
+  // Award XP + stat points to the profile when a day / final boss is cleared
+  onReward?: (xp: number, statPoints: number) => void;
+  // Report hard-lock status up to App so it can block other screens
+  onLockChange?: (locked: boolean) => void;
 }
+
+const DAY_XP_REWARD = 250;
+const DAY_STAT_REWARD = 1;
+const FINAL_XP_REWARD = 2000;
+const FINAL_STAT_REWARD = 10;
 
 const PILLAR_META: { key: keyof TransformationDayDone; label: string; color: string }[] = [
   { key: "workout", label: "ออกกำลังกาย", color: "text-amber-400" },
@@ -67,15 +79,27 @@ function downscaleImage(file: File, maxSize = 360): Promise<string> {
   });
 }
 
-export function TransformationView({ currentUser }: TransformationViewProps) {
+export function TransformationView({ currentUser, onReward, onLockChange }: TransformationViewProps) {
   const [state, setState] = useState<TransformationState>({
     startDate: null,
     completions: {},
   });
   const [loading, setLoading] = useState(true);
   const [selectedDay, setSelectedDay] = useState(1);
+  const [notice, setNotice] = useState<string | null>(null);
   const beforeInputRef = useRef<HTMLInputElement>(null);
   const afterInputRef = useRef<HTMLInputElement>(null);
+  const noticeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Solo Leveling style system-window toast
+  const showNotice = (msg: string) => {
+    setNotice(msg);
+    if (noticeTimer.current) clearTimeout(noticeTimer.current);
+    noticeTimer.current = setTimeout(() => setNotice(null), 2600);
+  };
+  useEffect(() => () => {
+    if (noticeTimer.current) clearTimeout(noticeTimer.current);
+  }, []);
 
   const isGuest = currentUser.uid.startsWith("guest_");
   const storageKey = `transformation_${currentUser.uid}`;
@@ -155,6 +179,35 @@ export function TransformationView({ currentUser }: TransformationViewProps) {
   // Soft Gate: the next day stays locked until today's tasks are cleared
   const todayCleared = started && !programOver && isDayComplete(currentDay);
 
+  // Hard Lock (opt-in, Duolingo-style): block the rest of the app until the core ritual is done
+  const hardLock =
+    !!state.disciplineLock && started && !programOver && !isDayPassed(currentDay);
+
+  // Report the live lock status up to App while this view is mounted
+  useEffect(() => {
+    onLockChange?.(hardLock);
+  }, [hardLock, onLockChange]);
+
+  const toggleDisciplineLock = async () => {
+    sfx.playClick();
+    await persist({ ...state, disciplineLock: !state.disciplineLock });
+  };
+
+  const handleClaimFinal = async () => {
+    if (!programOver || state.finalClaimed) return;
+    onReward?.(FINAL_XP_REWARD, FINAL_STAT_REWARD);
+    await persist({ ...state, finalClaimed: true });
+    showNotice(`MONARCH AWAKENED · +${FINAL_XP_REWARD} XP`);
+    try {
+      const sp = new SpeechSynthesisUtterance(
+        "Twenty one days survived. You have arisen. The golden body is yours."
+      );
+      sp.pitch = 0.4;
+      sp.rate = 0.85;
+      window.speechSynthesis.speak(sp);
+    } catch (e) {}
+  };
+
   const handleStart = async () => {
     sfx.playClick();
     await persist({ startDate: todayStr(), completions: { 1: { ...EMPTY_DAY } } });
@@ -180,9 +233,8 @@ export function TransformationView({ currentUser }: TransformationViewProps) {
     });
 
     if (willComplete) {
-      try {
-        sfx.playQuestComplete();
-      } catch (e) {}
+      onReward?.(DAY_XP_REWARD, DAY_STAT_REWARD);
+      showNotice(`GATE CLEARED · DAY ${selectedDay} · +${DAY_XP_REWARD} XP`);
       try {
         const sp = new SpeechSynthesisUtterance("Daily gate cleared. The next gate is now open.");
         sp.pitch = 0.55;
@@ -223,12 +275,24 @@ export function TransformationView({ currentUser }: TransformationViewProps) {
   if (!started) {
     return (
       <div className="space-y-6">
+        <SLStyles />
         <SectionHeader />
         <div className="p-6 bg-gradient-to-br from-[#1A0B2E] via-[#0A0D1A] to-[#041E26] border-2 border-[#7B2FBE]/40 rounded-2xl text-center relative overflow-hidden shadow-2xl">
           <div className="absolute top-0 right-0 w-40 h-40 bg-purple-600/15 rounded-full blur-3xl pointer-events-none" />
+          {/* hologram scanline */}
+          <div
+            className="absolute inset-x-0 h-0.5 bg-[#00D4FF] opacity-30 pointer-events-none shadow-[0_0_10px_#00D4FF]"
+            style={{ animation: "slScan 4s linear infinite" }}
+          />
           <div className="relative z-10">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full border-2 border-[#00D4FF]/40 bg-[#060A1A] flex items-center justify-center shadow-[0_0_25px_rgba(0,212,255,0.35)]">
-              <Sparkles className="w-7 h-7 text-[#00D4FF] animate-pulse" />
+            {/* Animated S-Gate portal */}
+            <div className="relative w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+              <div className="absolute inset-0 rounded-full bg-purple-600/25 blur-lg animate-pulse pointer-events-none" />
+              <div className="absolute w-16 h-16 border-2 border-dashed border-[#7B2FBE]/60 rounded-full animate-[spin_10s_linear_infinite] pointer-events-none" />
+              <div className="absolute w-12 h-12 border border-[#00D4FF]/50 border-t-purple-500 rounded-full animate-[spin_6s_linear_infinite_reverse] pointer-events-none" />
+              <div className="w-9 h-9 rounded-full border-2 border-[#00D4FF]/40 bg-[#060A1A] flex items-center justify-center shadow-[0_0_25px_rgba(0,212,255,0.35)]">
+                <Sparkles className="w-4 h-4 text-[#00D4FF] animate-pulse" />
+              </div>
             </div>
             <h3 className="text-xl font-black text-white">โปรโตคอลร่างทอง 21 วัน</h3>
             <p className="text-xs text-gray-400 font-mono mt-2 leading-relaxed">
@@ -284,11 +348,18 @@ export function TransformationView({ currentUser }: TransformationViewProps) {
 
   return (
     <div className="space-y-6">
+      <SLStyles />
+      {notice && <SystemNotice message={notice} />}
       <SectionHeader />
 
       {/* Progress overview */}
       <div className="p-5 bg-gradient-to-br from-[#12041E] to-[#0A0D1A] border-2 border-[#7B2FBE]/30 rounded-2xl relative overflow-hidden shadow-2xl">
         <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-600/10 rounded-full blur-2xl pointer-events-none" />
+        {/* hologram scanline */}
+        <div
+          className="absolute inset-x-0 h-0.5 bg-[#00D4FF] opacity-25 pointer-events-none shadow-[0_0_10px_#00D4FF]"
+          style={{ animation: "slScan 5s linear infinite" }}
+        />
         <div className="flex justify-between items-start mb-3">
           <div>
             <span className="text-[9px] text-[#7B2FBE] font-mono uppercase tracking-widest font-black block">
@@ -348,6 +419,45 @@ export function TransformationView({ currentUser }: TransformationViewProps) {
         </div>
       )}
 
+      {/* Discipline Lock toggle (Duolingo-style hard lock) */}
+      {!programOver && (
+        <button
+          onClick={toggleDisciplineLock}
+          className={`w-full flex items-center gap-3 p-3 rounded-xl border transition-all cursor-pointer ${
+            state.disciplineLock
+              ? "bg-rose-950/40 border-rose-500/40"
+              : "bg-slate-900/80 border-slate-800 hover:border-rose-500/30"
+          }`}
+        >
+          <div
+            className={`w-6 h-6 shrink-0 rounded-md border flex items-center justify-center ${
+              state.disciplineLock ? "text-rose-400 border-rose-500/50" : "text-gray-500 border-slate-700"
+            }`}
+          >
+            {state.disciplineLock ? <Lock className="w-4 h-4" /> : <Unlock className="w-4 h-4" />}
+          </div>
+          <div className="text-left min-w-0 flex-1">
+            <p className={`text-xs font-bold ${state.disciplineLock ? "text-rose-300" : "text-gray-200"} font-sans`}>
+              Discipline Lock {state.disciplineLock ? "· เปิดอยู่" : "· ปิดอยู่"}
+            </p>
+            <p className="text-[10px] text-gray-500 font-mono mt-0.5 leading-relaxed">
+              เปิดแล้วจะเข้าหน้าอื่นไม่ได้ จนกว่าจะทำ "ออกกำลังกาย" ของวันนี้เสร็จ (แบบ Duolingo)
+            </p>
+          </div>
+          <div
+            className={`w-9 h-5 rounded-full shrink-0 relative transition-colors ${
+              state.disciplineLock ? "bg-rose-600" : "bg-slate-700"
+            }`}
+          >
+            <div
+              className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-all ${
+                state.disciplineLock ? "left-4" : "left-0.5"
+              }`}
+            />
+          </div>
+        </button>
+      )}
+
       {/* 21-day path grid */}
       <div className="p-5 bg-slate-900/80 border border-slate-800 rounded-2xl">
         <h4 className="text-xs font-black text-gray-300 font-mono uppercase tracking-widest mb-4">
@@ -403,9 +513,29 @@ export function TransformationView({ currentUser }: TransformationViewProps) {
       </div>
 
       {/* Selected day detail */}
-      <div className="p-5 bg-gradient-to-br from-[#0A0D1A] to-[#0F0A1E] border border-purple-500/25 rounded-2xl">
-        <div className="flex justify-between items-center mb-1">
-          <h4 className="text-sm font-black text-white">Day {selectedDay}</h4>
+      <div
+        className={`p-5 bg-gradient-to-br from-[#0A0D1A] to-[#0F0A1E] border rounded-2xl relative overflow-hidden transition-all ${
+          selStatus === "active"
+            ? "border-[#7B2FBE]/50 shadow-[0_0_25px_rgba(123,47,190,0.25)]"
+            : "border-purple-500/25"
+        }`}
+      >
+        {selStatus === "active" && (
+          <div
+            className="absolute inset-x-0 h-0.5 bg-[#7B2FBE] opacity-30 pointer-events-none shadow-[0_0_10px_#7B2FBE]"
+            style={{ animation: "slScan 6s linear infinite" }}
+          />
+        )}
+        <div className="flex justify-between items-center mb-1 relative z-10">
+          <div className="flex items-center gap-2">
+            {selStatus === "active" && (
+              <span className="relative flex w-2.5 h-2.5">
+                <span className="absolute inline-flex h-full w-full rounded-full bg-[#00D4FF] opacity-75 animate-ping" />
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#00D4FF]" />
+              </span>
+            )}
+            <h4 className="text-sm font-black text-white">Day {selectedDay}</h4>
+          </div>
           <span className="text-[9px] font-mono uppercase tracking-widest text-[#7B2FBE] bg-purple-950/40 px-2 py-0.5 border border-[#7B2FBE]/20 rounded">
             {plan.phaseShort}
           </span>
@@ -506,17 +636,50 @@ export function TransformationView({ currentUser }: TransformationViewProps) {
         </p>
       </div>
 
-      {/* Completion / success banner */}
+      {/* Final Boss / completion reveal */}
       {programOver && (
-        <div className="p-5 bg-gradient-to-br from-[#1A1206] to-[#0A0D1A] border-2 border-yellow-500/40 rounded-2xl text-center shadow-2xl">
-          <Trophy className="w-10 h-10 mx-auto text-yellow-400 mb-2 animate-bounce" />
-          <h3 className="text-lg font-black text-white">
-            {successReached ? "ภารกิจสำเร็จ! ร่างทองปลดล็อก" : "ครบ 21 วันแล้ว"}
-          </h3>
-          <p className="text-xs text-gray-400 font-mono mt-1">
-            ทำสำเร็จ {passedDays}/21 วัน ({progressPct}%)
-            {successReached ? " — ผ่านเกณฑ์วินัย 80%+ 🔥" : " — รอบหน้าดันให้ถึง 80%+ นะ"}
-          </p>
+        <div className="p-6 bg-gradient-to-br from-[#1A0606] via-[#0A0D1A] to-[#12041E] border-2 border-yellow-500/40 rounded-2xl text-center shadow-2xl relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-40 h-40 bg-yellow-500/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="relative z-10">
+            <span className="text-[9px] text-rose-400 font-mono uppercase tracking-widest font-black block mb-2">
+              FINAL GATE · DAY 21 BOSS
+            </span>
+
+            {/* Boss core sphere */}
+            <div className="relative w-24 h-24 mx-auto flex items-center justify-center my-2">
+              <div className="absolute inset-0 rounded-full bg-yellow-500/20 blur-xl animate-pulse pointer-events-none" />
+              <div className="absolute w-20 h-20 border-4 border-dashed border-yellow-500/50 rounded-full animate-[spin_12s_linear_infinite] pointer-events-none" />
+              <div className="absolute w-11 h-11 bg-gradient-to-r from-[#2A1A02] via-[#FACC15] to-[#1A0D02] rounded-full flex items-center justify-center border border-yellow-400/40 shadow-[0_0_25px_#FACC15]">
+                {state.finalClaimed ? (
+                  <Trophy className="w-5 h-5 text-slate-900" />
+                ) : (
+                  <Skull className="w-5 h-5 text-slate-900 animate-pulse" />
+                )}
+              </div>
+            </div>
+
+            <h3 className="text-lg font-black text-white">
+              {successReached ? "ภารกิจสำเร็จ! ร่างทองปลดล็อก" : "ครบ 21 วันแล้ว"}
+            </h3>
+            <p className="text-xs text-gray-400 font-mono mt-1">
+              ทำสำเร็จ {passedDays}/21 วัน ({progressPct}%)
+              {successReached ? " — ผ่านเกณฑ์วินัย 80%+ 🔥" : " — รอบหน้าดันให้ถึง 80%+ นะ"}
+            </p>
+
+            {state.finalClaimed ? (
+              <div className="mt-4 p-2 bg-yellow-950/40 border border-yellow-500/20 rounded-lg text-yellow-300 text-[10px] font-mono">
+                รับรางวัลร่างทองแล้ว · +{FINAL_XP_REWARD} XP · +{FINAL_STAT_REWARD} Stat Points
+              </div>
+            ) : (
+              <button
+                onClick={handleClaimFinal}
+                className="w-full mt-4 py-3 bg-gradient-to-r from-yellow-600 to-amber-500 text-slate-900 font-black uppercase text-sm tracking-wider rounded-xl hover:scale-[1.02] transition-transform cursor-pointer shadow-[0_0_20px_rgba(250,204,21,0.4)] flex items-center justify-center gap-2"
+                style={{ minHeight: "48px" }}
+              >
+                <Zap className="w-4 h-4" /> รับรางวัล Boss · +{FINAL_XP_REWARD} XP
+              </button>
+            )}
+          </div>
         </div>
       )}
 
@@ -527,6 +690,51 @@ export function TransformationView({ currentUser }: TransformationViewProps) {
       >
         รีเซ็ตโปรแกรม
       </button>
+    </div>
+  );
+}
+
+// Injected Solo Leveling keyframes (scanline, system-window flash, rune blink)
+function SLStyles() {
+  return (
+    <style>{`
+      @keyframes slScan { 0% { top: 0%; } 50% { top: 100%; } 100% { top: 0%; } }
+      @keyframes slFlash {
+        0% { opacity: 0; transform: translateY(-14px) scale(0.95); }
+        12% { opacity: 1; transform: translateY(0) scale(1); }
+        85% { opacity: 1; transform: translateY(0) scale(1); }
+        100% { opacity: 0; transform: translateY(-8px) scale(0.98); }
+      }
+      @keyframes slBlink { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
+      @keyframes slRise { 0% { transform: translateY(8px); opacity: 0; } 100% { transform: translateY(0); opacity: 1; } }
+    `}</style>
+  );
+}
+
+// Solo Leveling holographic system-window toast
+function SystemNotice({ message }: { message: string }) {
+  return (
+    <div className="fixed inset-x-0 top-6 z-[200] flex justify-center px-4 pointer-events-none">
+      <div
+        className="relative w-full max-w-xs bg-[#091124] border-2 border-[#00D4FF]/55 rounded-xl px-4 py-3 shadow-[0_0_30px_rgba(0,212,255,0.45)] overflow-hidden"
+        style={{ animation: "slFlash 2.6s ease-in-out forwards" }}
+      >
+        {/* scanline */}
+        <div
+          className="absolute inset-x-0 h-0.5 bg-gradient-to-r from-transparent via-[#00D4FF] to-transparent shadow-[0_0_12px_#00D4FF] pointer-events-none"
+          style={{ animation: "slScan 2s linear infinite" }}
+        />
+        {/* tech corners */}
+        <div className="absolute top-0 left-0 w-3 h-3 border-t-2 border-l-2 border-[#00D4FF]" />
+        <div className="absolute top-0 right-0 w-3 h-3 border-t-2 border-r-2 border-[#00D4FF]" />
+        <div className="absolute bottom-0 left-0 w-3 h-3 border-b-2 border-l-2 border-[#00D4FF]" />
+        <div className="absolute bottom-0 right-0 w-3 h-3 border-b-2 border-r-2 border-[#00D4FF]" />
+
+        <div className="relative z-10 font-mono text-center">
+          <p className="text-[8px] text-[#00D4FF]/70 uppercase tracking-[0.3em] mb-1">System Notification</p>
+          <p className="text-xs font-black text-[#00D4FF] tracking-wider uppercase">{message}</p>
+        </div>
+      </div>
     </div>
   );
 }

@@ -14,7 +14,7 @@ import { LeaderboardView } from "./components/LeaderboardView";
 import { ProfileView } from "./components/ProfileView";
 import { AchievementsView } from "./components/AchievementsView";
 import { TransformationView } from "./components/TransformationView";
-import { Home, Dumbbell, Shield, Trophy, User, Sparkles, Flame, LogOut, Loader2, Compass, Volume2, VolumeX } from "lucide-react";
+import { Home, Dumbbell, Shield, Trophy, User, Sparkles, Flame, LogOut, Loader2, Compass, Volume2, VolumeX, Lock } from "lucide-react";
 import { sfx } from "./utils/audio";
 
 export default function App() {
@@ -23,6 +23,9 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<"home" | "transformation" | "workout" | "character" | "leaderboard" | "profile">("home");
   const [charSubTab, setCharSubTab] = useState<"status" | "quests" | "achievements">("status");
   const [sfxEnabled, setSfxEnabled] = useState(sfx.getEnabled());
+
+  // Discipline Lock: when enabled and today's core ritual isn't done, other screens are blocked
+  const [disciplineLocked, setDisciplineLocked] = useState(false);
 
   const changeTab = (tab: "home" | "transformation" | "workout" | "character" | "leaderboard" | "profile") => {
     setActiveTab(tab);
@@ -174,6 +177,51 @@ export default function App() {
     return () => {
       unsubWorkouts();
       unsubQuests();
+    };
+  }, [currentUser?.uid]);
+
+  // Evaluate Discipline Lock on login (so it is enforced before the 21-Day tab is opened)
+  useEffect(() => {
+    if (!currentUser) {
+      setDisciplineLocked(false);
+      return;
+    }
+    let cancelled = false;
+    const checkLock = async () => {
+      try {
+        let st: any = null;
+        if (currentUser.uid.startsWith("guest_")) {
+          const raw = localStorage.getItem(`transformation_${currentUser.uid}`);
+          st = raw ? JSON.parse(raw) : null;
+        } else {
+          const ref = doc(db, `users/${currentUser.uid}/soloLeveling`, "transformation");
+          const snap = await getDoc(ref);
+          st = snap.exists() ? snap.data() : null;
+        }
+
+        if (!st || !st.disciplineLock || !st.startDate) {
+          if (!cancelled) setDisciplineLocked(false);
+          return;
+        }
+
+        const start = new Date(st.startDate + "T00:00:00").getTime();
+        const today = new Date(new Date().toISOString().split("T")[0] + "T00:00:00").getTime();
+        const dayNum = Math.floor((today - start) / 86400000) + 1;
+
+        if (dayNum < 1 || dayNum > 21) {
+          if (!cancelled) setDisciplineLocked(false);
+          return;
+        }
+
+        const done = st.completions?.[dayNum];
+        if (!cancelled) setDisciplineLocked(!(done && done.workout));
+      } catch (e) {
+        if (!cancelled) setDisciplineLocked(false);
+      }
+    };
+    checkLock();
+    return () => {
+      cancelled = true;
     };
   }, [currentUser?.uid]);
 
@@ -639,6 +687,60 @@ export default function App() {
     }
   };
 
+  // Reward XP + stat points when a Transformation day (or the final boss) is cleared
+  const handleTransformationReward = async (xpReward: number, statReward: number) => {
+    if (!currentUser) return;
+
+    let totalXp = currentUser.xp + xpReward;
+    let userLevel = currentUser.level;
+    let shouldLevelUpAnim = false;
+    let gainedStatPoints = statReward;
+
+    while (totalXp >= 1000) {
+      totalXp -= 1000;
+      userLevel += 1;
+      shouldLevelUpAnim = true;
+      gainedStatPoints += 5;
+    }
+
+    const finalStatPoints = (currentUser.statPoints || 0) + gainedStatPoints;
+
+    try {
+      sfx.playQuestComplete();
+    } catch (e) {}
+
+    if (currentUser.uid.startsWith("guest_")) {
+      const updatedLocalProfile: UserProfile = {
+        ...currentUser,
+        xp: totalXp,
+        level: userLevel,
+        statPoints: finalStatPoints
+      };
+      localStorage.setItem(`profile_${currentUser.uid}`, JSON.stringify(updatedLocalProfile));
+      setCurrentUser(updatedLocalProfile);
+    } else {
+      try {
+        const userRef = doc(db, "users", currentUser.uid);
+        await updateDoc(userRef, {
+          xp: totalXp,
+          level: userLevel,
+          statPoints: finalStatPoints
+        });
+        await loadUserProfile(currentUser.uid);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    if (shouldLevelUpAnim) {
+      setLevelUpTarget(userLevel);
+      setLevelUpVisible(true);
+      try {
+        sfx.playLevelUp();
+      } catch (e) {}
+    }
+  };
+
   if (authLoading) {
     return (
       <div className="min-h-screen bg-[#0A0E1A] flex flex-col items-center justify-center text-gray-400 font-mono gap-3.5">
@@ -786,7 +888,29 @@ export default function App() {
                 )}
 
                 {activeTab === "transformation" && (
-                  <TransformationView currentUser={currentUser} />
+                  <TransformationView
+                    currentUser={currentUser}
+                    onReward={handleTransformationReward}
+                    onLockChange={setDisciplineLocked}
+                  />
+                )}
+
+                {/* Duolingo-style hard lock: blocks every other screen until today's ritual is done */}
+                {disciplineLocked && activeTab !== "transformation" && (
+                  <div className="absolute inset-0 z-40 bg-slate-950/95 backdrop-blur-md flex flex-col items-center justify-center text-center px-8">
+                    <Lock className="w-12 h-12 text-rose-500 mb-4 animate-pulse" />
+                    <h3 className="text-lg font-black text-white">ระบบล็อก: ภารกิจวันนี้ยังไม่เสร็จ</h3>
+                    <p className="text-xs text-gray-400 font-mono mt-2 leading-relaxed max-w-xs">
+                      Discipline Lock เปิดอยู่ — ทำภารกิจหลัก (ออกกำลังกาย) ของวันนี้ให้เสร็จก่อนถึงจะเข้าหน้าอื่นได้
+                    </p>
+                    <button
+                      onClick={() => changeTab("transformation")}
+                      className="mt-6 px-6 py-3 bg-gradient-to-r from-rose-700 to-purple-700 text-white font-black uppercase text-sm tracking-wider rounded-xl hover:scale-[1.02] transition-transform cursor-pointer shadow-[0_0_20px_rgba(190,47,123,0.4)]"
+                      style={{ minHeight: "48px" }}
+                    >
+                      ไปทำภารกิจวันนี้
+                    </button>
+                  </div>
                 )}
 
                 {activeTab === "workout" && (
