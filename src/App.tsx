@@ -897,16 +897,19 @@ export default function App() {
 
                 {/* Duolingo-style hard lock: blocks every other screen until today's ritual is done */}
                 {disciplineLocked && activeTab !== "transformation" && (
-                  <div className="absolute inset-0 z-40 bg-slate-950/95 backdrop-blur-md flex flex-col items-center justify-center text-center px-8">
-                    <Lock className="w-12 h-12 text-rose-500 mb-4 animate-pulse" />
-                    <h3 className="text-lg font-black text-white">ระบบล็อก: ภารกิจวันนี้ยังไม่เสร็จ</h3>
-                    <p className="text-xs text-gray-400 font-mono mt-2 leading-relaxed max-w-xs">
-                      Discipline Lock เปิดอยู่ — ทำภารกิจหลัก (ออกกำลังกาย) ของวันนี้ให้เสร็จก่อนถึงจะเข้าหน้าอื่นได้
+                  <div className="absolute inset-0 z-40 bg-[#1B1528]/95 backdrop-blur-md flex flex-col items-center justify-center text-center px-8">
+                    <Lock className="w-10 h-10 text-[#C9B8F0] mb-5" />
+                    <p className="font-mono text-[10px] tracking-[0.4em] text-[#C9B8F0]/60 uppercase mb-2">Locked</p>
+                    <h3 className="text-2xl text-[#EDE6FA] font-semibold" style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}>
+                      ภารกิจวันนี้ยังไม่เสร็จ
+                    </h3>
+                    <p className="text-xs text-[#9A8FB8] mt-3 leading-relaxed max-w-xs">
+                      Discipline Lock เปิดอยู่ — ทำ "ออกกำลังกาย" ของวันนี้ให้เสร็จก่อน ถึงจะเข้าหน้าอื่นได้
                     </p>
                     <button
                       onClick={() => changeTab("transformation")}
-                      className="mt-6 px-6 py-3 bg-gradient-to-r from-rose-700 to-purple-700 text-white font-black uppercase text-sm tracking-wider rounded-xl hover:scale-[1.02] transition-transform cursor-pointer shadow-[0_0_20px_rgba(190,47,123,0.4)]"
-                      style={{ minHeight: "48px" }}
+                      className="mt-6 px-8 py-3.5 bg-[#B9A3E3] hover:bg-[#C7B5EC] text-[#241B3A] font-semibold rounded-full transition-colors cursor-pointer shadow-[0_8px_30px_rgba(185,163,227,0.3)]"
+                      style={{ minHeight: "52px" }}
                     >
                       ไปทำภารกิจวันนี้
                     </button>
