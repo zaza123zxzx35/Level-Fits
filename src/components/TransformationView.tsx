@@ -354,13 +354,14 @@ export function TransformationView({ currentUser, onReward, onLockChange }: Tran
 
       {/* Progress overview */}
       <div className="p-5 bg-gradient-to-br from-[#12041E] to-[#0A0D1A] border-2 border-[#7B2FBE]/30 rounded-2xl relative overflow-hidden shadow-2xl">
+        <RuneGrid />
         <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-600/10 rounded-full blur-2xl pointer-events-none" />
         {/* hologram scanline */}
         <div
           className="absolute inset-x-0 h-0.5 bg-[#00D4FF] opacity-25 pointer-events-none shadow-[0_0_10px_#00D4FF]"
           style={{ animation: "slScan 5s linear infinite" }}
         />
-        <div className="flex justify-between items-start mb-3">
+        <div className="flex justify-between items-start mb-3 relative z-10">
           <div>
             <span className="text-[9px] text-[#7B2FBE] font-mono uppercase tracking-widest font-black block">
               {programOver ? "PROTOCOL COMPLETE" : `${getDayPlan(currentDay).phaseShort} · DAY ${currentDay}/21`}
@@ -375,14 +376,14 @@ export function TransformationView({ currentUser, onReward, onLockChange }: Tran
           </div>
         </div>
 
-        <div className="h-3 w-full bg-slate-950 rounded-full border border-purple-500/20 overflow-hidden">
+        <div className="h-3 w-full bg-slate-950 rounded-full border border-purple-500/20 overflow-hidden relative z-10">
           <div
             className="h-full bg-gradient-to-r from-purple-800 via-[#00C8FF] to-yellow-500 rounded-full transition-all duration-500"
             style={{ width: `${progressPct}%` }}
           />
         </div>
 
-        <div className="mt-3 flex gap-2 text-[10px] font-mono">
+        <div className="mt-3 flex gap-2 text-[10px] font-mono relative z-10">
           <span className="flex items-center gap-1 px-2 py-1 bg-emerald-950/40 border border-emerald-500/20 rounded text-emerald-400">
             <Check className="w-3 h-3" /> {completedDays} วันครบ 3 เสา
           </span>
@@ -550,7 +551,7 @@ export function TransformationView({ currentUser, onReward, onLockChange }: Tran
         )}
 
         {selStatus !== "locked" && (
-          <div className="space-y-3">
+          <div className="space-y-3" key={selectedDay}>
             <PillarRow
               icon={
                 plan.workoutType === "rest" ? (
@@ -569,6 +570,7 @@ export function TransformationView({ currentUser, onReward, onLockChange }: Tran
               checked={selDone.workout}
               editable={selStatus === "active"}
               onToggle={() => togglePillar("workout")}
+              delay={0}
             />
             <PillarRow
               icon={<Salad className="w-4 h-4" />}
@@ -578,6 +580,7 @@ export function TransformationView({ currentUser, onReward, onLockChange }: Tran
               checked={selDone.nutrition}
               editable={selStatus === "active"}
               onToggle={() => togglePillar("nutrition")}
+              delay={90}
             />
             <PillarRow
               icon={<Sparkles className="w-4 h-4" />}
@@ -587,6 +590,7 @@ export function TransformationView({ currentUser, onReward, onLockChange }: Tran
               checked={selDone.skincare}
               editable={selStatus === "active"}
               onToggle={() => togglePillar("skincare")}
+              delay={180}
             />
             {selStatus === "past" && (
               <p className="text-[9px] text-gray-500 font-mono text-center pt-1">
@@ -707,7 +711,29 @@ function SLStyles() {
       }
       @keyframes slBlink { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
       @keyframes slRise { 0% { transform: translateY(8px); opacity: 0; } 100% { transform: translateY(0); opacity: 1; } }
+      @keyframes slGlitch {
+        0%, 92%, 100% { transform: translate(0); text-shadow: 0 0 6px rgba(0,212,255,0.35); }
+        93% { transform: translate(-1px, 0); text-shadow: 1px 0 #00D4FF, -1px 0 #7B2FBE; }
+        95% { transform: translate(1px, 0); text-shadow: -1px 0 #00D4FF, 1px 0 #7B2FBE; }
+        97% { transform: translate(0, 0); text-shadow: 0 0 6px rgba(0,212,255,0.35); }
+      }
+      @keyframes slGrid { 0% { background-position: 0 0; } 100% { background-position: 22px 22px; } }
     `}</style>
+  );
+}
+
+// Faint moving rune-grid backdrop (Solo Leveling system tone)
+function RuneGrid() {
+  return (
+    <div
+      className="absolute inset-0 pointer-events-none opacity-[0.07]"
+      style={{
+        backgroundImage:
+          "linear-gradient(#00D4FF 1px, transparent 1px), linear-gradient(90deg, #00D4FF 1px, transparent 1px)",
+        backgroundSize: "22px 22px",
+        animation: "slGrid 6s linear infinite",
+      }}
+    />
   );
 }
 
@@ -732,7 +758,12 @@ function SystemNotice({ message }: { message: string }) {
 
         <div className="relative z-10 font-mono text-center">
           <p className="text-[8px] text-[#00D4FF]/70 uppercase tracking-[0.3em] mb-1">System Notification</p>
-          <p className="text-xs font-black text-[#00D4FF] tracking-wider uppercase">{message}</p>
+          <p
+            className="text-xs font-black text-[#00D4FF] tracking-wider uppercase"
+            style={{ animation: "slGlitch 1.2s steps(1) infinite" }}
+          >
+            {message}
+          </p>
         </div>
       </div>
     </div>
@@ -744,7 +775,10 @@ function SectionHeader() {
     <div className="flex items-center justify-between border-b border-[#7B2FBE]/30 pb-3 font-mono">
       <div className="flex items-center gap-2">
         <Flame className="w-4 h-4 text-amber-500" />
-        <h2 className="text-xs font-black text-amber-400 tracking-widest uppercase">
+        <h2
+          className="text-xs font-black text-amber-400 tracking-widest uppercase"
+          style={{ animation: "slGlitch 4s steps(1) infinite" }}
+        >
           21-DAY TRANSFORMATION
         </h2>
       </div>
@@ -769,14 +803,16 @@ interface PillarRowProps {
   checked: boolean;
   editable: boolean;
   onToggle: () => void;
+  delay?: number;
 }
 
-function PillarRow({ icon, accent, title, detail, checked, editable, onToggle }: PillarRowProps) {
+function PillarRow({ icon, accent, title, detail, checked, editable, onToggle, delay = 0 }: PillarRowProps) {
   const a = ACCENT_MAP[accent];
   return (
     <button
       onClick={onToggle}
       disabled={!editable}
+      style={{ animation: `slRise 0.4s ease-out both`, animationDelay: `${delay}ms` }}
       className={`w-full text-left flex gap-3 p-3 rounded-xl border transition-all ${a.bg} ${a.border} ${
         editable ? "cursor-pointer hover:brightness-125 active:scale-[0.99]" : "cursor-default opacity-90"
       } ${checked ? "ring-1 ring-inset ring-current " + a.text : ""}`}
