@@ -32,6 +32,14 @@ body {
   border: 1px solid rgba(201, 184, 240, 0.12);
 }
 
+/* iOS notch / home-indicator safe areas (standalone PWA) */
+.safe-top {
+  padding-top: calc(env(safe-area-inset-top) + 1.75rem);
+}
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
 /* Soft lavender scrollbar to match the theme */
 ::-webkit-scrollbar {
   width: 6px;

@@ -836,7 +836,7 @@ export default function App() {
           ) : (
             <>
               {/* Game HUD Bar header */}
-              <div className="px-5 pt-7 pb-4 bg-[#15101F]/90 border-b border-white/10 flex justify-between items-center relative z-25">
+              <div className="px-5 safe-top pb-4 bg-[#15101F]/90 border-b border-white/10 flex justify-between items-center relative z-25">
                 <div className="flex items-center gap-2">
                   <div className="w-1.5 h-6 bg-[#B9A3E3] rounded-full" />
                   <span className="text-[#EDE6FA] font-monument tracking-[0.3em] text-base">
@@ -876,7 +876,7 @@ export default function App() {
               </div>
 
               {/* Central screen tab contents */}
-              <main className="flex-1 overflow-y-auto px-4 py-6 relative z-10 pb-20">
+              <main className="flex-1 overflow-y-auto px-4 py-6 relative z-10 pb-28">
                 {activeTab === "home" && (
                   <HomeOverview
                     currentUser={currentUser}
@@ -1002,7 +1002,7 @@ export default function App() {
               </main>
 
               {/* Persistent Bottom Mobile Navigation Rail */}
-              <nav className="absolute bottom-0 left-0 right-0 h-16 bg-[#15101F]/95 border-t border-white/10 flex justify-around items-stretch z-30 pb-safe px-2">
+              <nav className="absolute bottom-0 left-0 right-0 min-h-16 bg-[#15101F]/95 border-t border-white/10 flex justify-around items-stretch z-30 safe-bottom px-2">
                 <button
                   onClick={() => changeTab("home")}
                   className={`flex flex-col items-center justify-center flex-1 cursor-pointer transition-colors ${
