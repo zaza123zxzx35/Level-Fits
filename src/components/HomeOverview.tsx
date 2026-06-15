@@ -25,7 +25,7 @@ interface HomeOverviewProps {
   currentUser: UserProfile;
   workoutHistory: WorkoutLog[];
   quests: Quest[];
-  onNavigateToTab: (tab: "workout" | "character" | "leaderboard" | "profile") => void;
+  onNavigateToTab: (tab: "workout" | "character" | "profile") => void;
 }
 
 interface GuildBoss {
@@ -392,14 +392,6 @@ export function HomeOverview({ currentUser, workoutHistory, quests, onNavigateTo
             style={{ minHeight: "44px" }}
           >
             <Sword className="w-4 h-4" /> Strike Boss
-          </button>
-
-          <button
-            onClick={() => onNavigateToTab("leaderboard")}
-            className="px-3.5 frost rounded-full text-[#C7BBE2] hover:text-[#EDE6FA] transition-colors cursor-pointer"
-            style={{ minWidth: "44px", minHeight: "44px" }}
-          >
-            Guild Leaders
           </button>
         </div>
       </div>

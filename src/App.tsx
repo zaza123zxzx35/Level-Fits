@@ -10,24 +10,23 @@ import { HomeOverview } from "./components/HomeOverview";
 import { WorkoutLogger } from "./components/WorkoutLogger";
 import { CharacterProfile } from "./components/CharacterProfile";
 import { QuestsView } from "./components/QuestsView";
-import { LeaderboardView } from "./components/LeaderboardView";
 import { ProfileView } from "./components/ProfileView";
 import { AchievementsView } from "./components/AchievementsView";
 import { TransformationView } from "./components/TransformationView";
-import { Home, Dumbbell, Shield, Trophy, User, Sparkles, Flame, LogOut, Loader2, Compass, Volume2, VolumeX, Lock } from "lucide-react";
+import { Home, Dumbbell, Shield, User, Sparkles, Flame, LogOut, Loader2, Compass, Volume2, VolumeX, Lock } from "lucide-react";
 import { sfx } from "./utils/audio";
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"home" | "transformation" | "workout" | "character" | "leaderboard" | "profile">("home");
+  const [activeTab, setActiveTab] = useState<"home" | "transformation" | "workout" | "character" | "profile">("home");
   const [charSubTab, setCharSubTab] = useState<"status" | "quests" | "achievements">("status");
   const [sfxEnabled, setSfxEnabled] = useState(sfx.getEnabled());
 
   // Discipline Lock: when enabled and today's core ritual isn't done, other screens are blocked
   const [disciplineLocked, setDisciplineLocked] = useState(false);
 
-  const changeTab = (tab: "home" | "transformation" | "workout" | "character" | "leaderboard" | "profile") => {
+  const changeTab = (tab: "home" | "transformation" | "workout" | "character" | "profile") => {
     setActiveTab(tab);
     sfx.playClick();
   };
@@ -985,10 +984,6 @@ export default function App() {
                   </div>
                 )}
 
-                {activeTab === "leaderboard" && (
-                  <LeaderboardView currentUser={currentUser} />
-                )}
-
                 {activeTab === "profile" && (
                   <ProfileView
                     currentUser={currentUser}
@@ -1050,17 +1045,6 @@ export default function App() {
                 >
                   <HelmetIcon className={`w-5 h-5 ${activeTab === "character" ? "scale-110" : ""}`} />
                   <span className="text-[9px] font-bold tracking-widest uppercase font-mono mt-1">Character</span>
-                </button>
-
-                <button
-                  onClick={() => changeTab("leaderboard")}
-                  className={`flex flex-col items-center justify-center flex-1 cursor-pointer transition-colors ${
-                    activeTab === "leaderboard" ? "text-[#C9B8F0]" : "text-[#9A8FB8] hover:text-[#C7BBE2]"
-                  }`}
-                  style={{ minWidth: "44px", minHeight: "44px" }}
-                >
-                  <Trophy className={`w-5 h-5 ${activeTab === "leaderboard" ? "scale-110" : ""}`} />
-                  <span className="text-[9px] font-bold tracking-widest uppercase font-mono mt-1">Leader</span>
                 </button>
 
                 <button
