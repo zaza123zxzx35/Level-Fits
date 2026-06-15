@@ -374,26 +374,26 @@ export function LeaderboardView({ currentUser }: LeaderboardViewProps) {
   return (
     <div className="space-y-6">
       {/* season reset countdown */}
-      <div className="p-4 bg-gradient-to-r from-slate-900 via-purple-950/70 to-slate-900 border border-yellow-500/35 rounded-xl text-center">
-        <span className="text-[10px] font-bold text-yellow-400 uppercase tracking-widest block font-mono">
+      <div className="p-4 frost rounded-2xl text-center">
+        <span className="text-[10px] font-monument tracking-[0.3em] text-[#C9B8F0]/60 uppercase block">
           Season Rest Reset Countdown
         </span>
-        <div className="text-xl font-bold font-mono text-white mt-1 uppercase tracking-wide flex items-center justify-center gap-1.5 animate-pulse">
-          <Award className="w-5 h-5 text-yellow-500" /> {countdown}
+        <div className="text-xl font-display font-semibold text-[#EDE6FA] mt-1 tracking-wide flex items-center justify-center gap-1.5">
+          <Award className="w-5 h-5 text-[#C9B8F0]" /> {countdown}
         </div>
-        <p className="text-gray-400 text-[10px] mt-0.5">
+        <p className="text-[#9A8FB8] text-[10px] mt-0.5">
           Guild grand rewards disbursed to top 10 positions on Sunday reset.
         </p>
       </div>
 
       {/* Tabs */}
-      <div className="flex border-b border-slate-800">
+      <div className="flex border-b border-white/10">
         <button
           onClick={() => setActiveTab("global")}
-          className={`flex-1 pb-3 text-sm font-black uppercase tracking-wider font-mono flex items-center justify-center gap-2 cursor-pointer border-b-2 transition-colors ${
+          className={`flex-1 pb-3 text-sm font-display font-semibold tracking-wide flex items-center justify-center gap-2 cursor-pointer border-b-2 transition-colors ${
             activeTab === "global"
-              ? "border-yellow-400 text-yellow-300"
-              : "border-transparent text-gray-500 hover:text-gray-300"
+              ? "border-[#C9B8F0] text-[#C9B8F0]"
+              : "border-transparent text-[#9A8FB8] hover:text-[#C7BBE2]"
           }`}
           style={{ minHeight: "44px" }}
         >
@@ -401,10 +401,10 @@ export function LeaderboardView({ currentUser }: LeaderboardViewProps) {
         </button>
         <button
           onClick={() => setActiveTab("friends")}
-          className={`flex-1 pb-3 text-sm font-black uppercase tracking-wider font-mono flex items-center justify-center gap-2 cursor-pointer border-b-2 transition-colors ${
+          className={`flex-1 pb-3 text-sm font-display font-semibold tracking-wide flex items-center justify-center gap-2 cursor-pointer border-b-2 transition-colors ${
             activeTab === "friends"
-              ? "border-yellow-400 text-yellow-300"
-              : "border-transparent text-gray-500 hover:text-gray-300"
+              ? "border-[#C9B8F0] text-[#C9B8F0]"
+              : "border-transparent text-[#9A8FB8] hover:text-[#C7BBE2]"
           }`}
           style={{ minHeight: "44px" }}
         >
@@ -414,8 +414,8 @@ export function LeaderboardView({ currentUser }: LeaderboardViewProps) {
 
       {/* Friend Search & Add Bar */}
       {activeTab === "friends" && (
-        <form onSubmit={handleAddFriend} className="space-y-3 p-4 bg-slate-900/60 rounded-xl border border-slate-800">
-          <label className="text-gray-300 text-xs font-bold uppercase tracking-widest block font-mono">
+        <form onSubmit={handleAddFriend} className="space-y-3 p-4 frost rounded-2xl">
+          <label className="text-[#C9B8F0]/60 text-[10px] font-monument tracking-[0.3em] uppercase block">
             Rally New Ally
           </label>
           <div className="flex gap-2">
@@ -425,40 +425,40 @@ export function LeaderboardView({ currentUser }: LeaderboardViewProps) {
               placeholder="Search by hero's handle..."
               value={friendInput}
               onChange={(e) => setFriendInput(e.target.value)}
-              className="flex-1 h-11 px-4 rounded-lg border border-slate-800 bg-slate-950 text-white placeholder-gray-600 focus:outline-none focus:border-purple-500 text-xs font-mono"
+              className="flex-1 h-11 px-4 rounded-lg border border-white/10 bg-[#15101F] text-[#EDE6FA] placeholder-[#9A8FB8] focus:outline-none focus:border-[#C9B8F0] text-xs font-mono"
             />
             <button
               type="submit"
               disabled={loading}
-              className="px-4 bg-gradient-to-r from-yellow-500 to-amber-600 text-slate-950 font-black rounded-lg border border-yellow-300 shadow hover:scale-[1.02] cursor-pointer flex items-center gap-1.5 uppercase tracking-wider text-xs font-mono"
+              className="px-4 bg-[#B9A3E3] hover:bg-[#C7B5EC] text-[#241B3A] font-black rounded-full hover:scale-[1.02] cursor-pointer flex items-center gap-1.5 uppercase tracking-wider text-xs font-mono"
               style={{ minHeight: "44px" }}
             >
               <UserPlus className="w-4 h-4" /> Recruit
             </button>
           </div>
-          {successText && <p className="text-emerald-400 text-xs font-mono">{successText}</p>}
-          {errorText && <p className="text-red-400 text-xs font-mono">{errorText}</p>}
+          {successText && <p className="text-[#C9B8F0] text-xs font-mono">{successText}</p>}
+          {errorText && <p className="text-rose-300/80 text-xs font-mono">{errorText}</p>}
         </form>
       )}
 
       {/* Ranks list */}
-      <div className="bg-slate-950/40 border border-slate-800 rounded-xl divide-y divide-slate-900 overflow-hidden">
+      <div className="frost rounded-2xl divide-y divide-white/10 overflow-hidden">
         {loading && (
-          <div className="flex flex-col items-center justify-center py-12 gap-2 text-gray-500 font-mono text-xs">
-            <div className="w-6 h-6 border-2 border-yellow-400 border-t-transparent rounded-full animate-spin" />
+          <div className="flex flex-col items-center justify-center py-12 gap-2 text-[#9A8FB8] font-mono text-xs">
+            <div className="w-6 h-6 border-2 border-[#C9B8F0] border-t-transparent rounded-full animate-spin" />
             Querying server records...
           </div>
         )}
 
         {!loading && activeTab === "global" && globalLeaders.length === 0 && (
-          <p className="text-center py-12 text-gray-500 text-xs font-mono">No heroes have logged XP yet. Be the first!</p>
+          <p className="text-center py-12 text-[#9A8FB8] text-xs font-mono">No heroes have logged XP yet. Be the first!</p>
         )}
 
         {!loading && activeTab === "friends" && friendsList.length === 0 && (
           <div className="text-center py-12 px-6">
-            <Users className="w-8 h-8 text-gray-600 mx-auto mb-2" />
-            <p className="text-gray-400 text-xs font-mono">You haven't formed any alliances yet.</p>
-            <p className="text-gray-500 text-[10px] mt-1">Search their gaming handle above to invite them!</p>
+            <Users className="w-8 h-8 text-[#9A8FB8] mx-auto mb-2" />
+            <p className="text-[#C7BBE2] text-xs font-mono">You haven't formed any alliances yet.</p>
+            <p className="text-[#9A8FB8] text-[10px] mt-1">Search their gaming handle above to invite them!</p>
           </div>
         )}
 
@@ -470,79 +470,79 @@ export function LeaderboardView({ currentUser }: LeaderboardViewProps) {
               const rank = index + 1;
               const hunterRank = getHunterRank(leader.level);
               
-              // Rank specific color glows
-              let rowColorClass = "border-b border-slate-900/40";
+              // Rank specific color glows (lavender shades)
+              let rowColorClass = "border-b border-white/10";
               if (hunterRank === "S") {
-                rowColorClass += " bg-yellow-950/5 border-l-2 border-l-yellow-500/80 shadow-[inset_4px_0_12px_rgba(234,179,8,0.06)]";
+                rowColorClass += " border-l-2 border-l-[#E3D8FA]/80";
               } else if (hunterRank === "A") {
-                rowColorClass += " bg-purple-950/5 border-l-2 border-l-purple-500/80 shadow-[inset_4px_0_12px_rgba(147,51,234,0.06)]";
+                rowColorClass += " border-l-2 border-l-[#C9B8F0]/80";
               } else if (hunterRank === "B") {
-                rowColorClass += " bg-blue-950/5 border-l-2 border-l-blue-500/80 shadow-[inset_4px_0_12px_rgba(59,130,246,0.06)]";
+                rowColorClass += " border-l-2 border-l-[#8A5CF0]/80";
               } else if (hunterRank === "C") {
-                rowColorClass += " bg-green-950/5 border-l-2 border-l-green-500/80 shadow-[inset_4px_0_12px_rgba(34,197,94,0.06)]";
+                rowColorClass += " border-l-2 border-l-[#9A8FB8]/80";
               }
 
               return (
                 <div
                   key={leader.uid}
                   className={`flex items-center justify-between p-4 transition-all duration-300 ${rowColorClass} ${
-                    matchesUser ? "bg-purple-950/20 shadow-inner" : ""
+                    matchesUser ? "border-[#C9B8F0]/50 bg-[#3A2F58]/50" : ""
                   }`}
                 >
                   <div className="flex items-center gap-4">
                     {/* Rank Badge with Crown SVG for 1st, 2nd, 3rd */}
-                    <div className="w-12 text-left font-mono font-black text-xs flex items-center justify-start shrink-0">
+                    <div className="w-12 text-left font-display text-[#C9B8F0] text-xs flex items-center justify-start shrink-0">
                       {rank === 1 ? (
                         <div className="flex items-center gap-1">
-                          <svg className="w-4 h-4 text-yellow-405 drop-shadow-[0_0_6px_#facc15] shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                          <svg className="w-4 h-4 text-[#E3D8FA] drop-shadow-[0_0_6px_rgba(227,216,250,0.7)] shrink-0" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7zm3 14h14v2H5v-2z" />
                           </svg>
-                          <span className="text-yellow-400 font-extrabold text-[10px]">1ST</span>
+                          <span className="text-[#E3D8FA] font-display text-[10px]">1ST</span>
                         </div>
                       ) : rank === 2 ? (
                         <div className="flex items-center gap-1">
-                          <svg className="w-4 h-4 text-slate-305 drop-shadow-[0_0_5px_#cbd5e1] shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                          <svg className="w-4 h-4 text-[#C9B8F0] drop-shadow-[0_0_5px_rgba(201,184,240,0.6)] shrink-0" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7zm3 14h14v2H5v-2z" />
                           </svg>
-                          <span className="text-slate-300 font-extrabold text-[10px]">2ND</span>
+                          <span className="text-[#C9B8F0] font-display text-[10px]">2ND</span>
                         </div>
                       ) : rank === 3 ? (
                         <div className="flex items-center gap-1">
-                          <svg className="w-4 h-4 text-amber-605 drop-shadow-[0_0_4px_#d97706] shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                          <svg className="w-4 h-4 text-[#8A5CF0] drop-shadow-[0_0_4px_rgba(138,92,240,0.6)] shrink-0" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7zm3 14h14v2H5v-2z" />
                           </svg>
-                          <span className="text-amber-600 font-extrabold text-[10px]">3RD</span>
+                          <span className="text-[#8A5CF0] font-display text-[10px]">3RD</span>
                         </div>
                       ) : (
-                        <span className="text-gray-500 pl-1">[{rank}TH]</span>
+                        <span className="text-[#9A8FB8] pl-1">[{rank}TH]</span>
                       )}
                     </div>
 
                     <div>
                       <div className="flex items-center gap-1.5">
-                        <span className={`font-bold font-sans text-sm ${matchesUser ? "text-yellow-300" : "text-white"}`}>
+                        <span className={`font-bold font-sans text-sm ${matchesUser ? "text-[#C9B8F0]" : "text-[#EDE6FA]"}`}>
                           {leader.displayName}
                         </span>
                         {matchesUser && (
-                          <span className="text-[9px] bg-yellow-400/25 border border-yellow-400/40 text-yellow-300 px-1 py-0.5 rounded font-black font-mono">
+                          <span className="text-[9px] bg-[#C9B8F0]/25 border border-[#C9B8F0]/40 text-[#C9B8F0] px-1 py-0.5 rounded font-black font-mono">
                             YOU
                           </span>
                         )}
-                        <span className="text-[8.5px] uppercase font-bold text-gray-500 tracking-widest font-mono">
+                        <span className="text-[8.5px] uppercase font-bold text-[#9A8FB8] tracking-widest font-mono">
                           [{hunterRank}-Rank]
                         </span>
                       </div>
-                      <span className="text-[10px] text-gray-400 font-mono uppercase tracking-wider">
+                      <span className="text-[10px] text-[#9A8FB8] font-mono uppercase tracking-wider">
                         {leader.characterClass}
                       </span>
                     </div>
                   </div>
 
                   <div className="text-right font-mono">
-                    <div className="text-yellow-400 text-sm font-black">
+                    <div className="text-[#C9B8F0] text-sm font-black">
                       Lv. {leader.level}
                     </div>
-                    <div className="text-gray-500 text-[10px]">
+                    <div className="text-[#9A8FB8] text-[10px]">
                       {leader.xp} XP
                     </div>
                   </div>
@@ -558,37 +558,37 @@ export function LeaderboardView({ currentUser }: LeaderboardViewProps) {
             {/* Inject current user first for friend leaderboard layout */}
             {(() => {
               const userHunterRank = getHunterRank(currentUser.level);
-              let userGlowClass = "bg-purple-950/25 border-b border-purple-900/45";
+              let userGlowClass = "border-[#C9B8F0]/50 bg-[#3A2F58]/50 border-b border-white/10";
               if (userHunterRank === "S") {
-                userGlowClass += " border-l-2 border-l-yellow-500/80";
+                userGlowClass += " border-l-2 border-l-[#E3D8FA]/80";
               } else if (userHunterRank === "A") {
-                userGlowClass += " border-l-2 border-l-purple-500/80";
+                userGlowClass += " border-l-2 border-l-[#C9B8F0]/80";
               } else if (userHunterRank === "B") {
-                userGlowClass += " border-l-2 border-l-blue-500/80";
+                userGlowClass += " border-l-2 border-l-[#8A5CF0]/80";
               } else if (userHunterRank === "C") {
-                userGlowClass += " border-l-2 border-l-green-500/80";
+                userGlowClass += " border-l-2 border-l-[#9A8FB8]/80";
               }
               return (
                 <div className={`flex items-center justify-between p-4 ${userGlowClass}`}>
                   <div className="flex items-center gap-4">
-                    <div className="w-6 text-center font-mono font-bold text-xs text-yellow-500 flex items-center justify-center shrink-0">
-                      <svg className="w-4 h-4 text-yellow-400 drop-shadow-[0_0_4px_rgba(234,179,8,0.7)]" viewBox="0 0 24 24" fill="currentColor">
+                    <div className="w-6 text-center font-mono font-bold text-xs text-[#C9B8F0] flex items-center justify-center shrink-0">
+                      <svg className="w-4 h-4 text-[#C9B8F0] drop-shadow-[0_0_4px_rgba(201,184,240,0.7)]" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
                       </svg>
                     </div>
                     <div>
                       <div className="flex items-center gap-1.5">
-                        <span className="font-bold text-sm text-yellow-300">{currentUser.displayName}</span>
-                        <span className="text-[9px] bg-yellow-400/25 text-yellow-300 px-1 rounded font-mono font-bold">OWNER</span>
+                        <span className="font-bold text-sm text-[#C9B8F0]">{currentUser.displayName}</span>
+                        <span className="text-[9px] bg-[#C9B8F0]/25 text-[#C9B8F0] px-1 rounded font-mono font-bold">OWNER</span>
                       </div>
-                      <span className="text-[10px] text-gray-400 font-mono uppercase tracking-wider block">
+                      <span className="text-[10px] text-[#9A8FB8] font-mono uppercase tracking-wider block">
                         {currentUser.characterClass}
                       </span>
                     </div>
                   </div>
                   <div className="text-right font-mono">
-                    <div className="text-yellow-400 text-sm font-black">Lv. {currentUser.level}</div>
-                    <div className="text-gray-500 text-[10px]">{currentUser.xp} XP</div>
+                    <div className="text-[#C9B8F0] text-sm font-black">Lv. {currentUser.level}</div>
+                    <div className="text-[#9A8FB8] text-[10px]">{currentUser.xp} XP</div>
                   </div>
                 </div>
               );
@@ -596,31 +596,31 @@ export function LeaderboardView({ currentUser }: LeaderboardViewProps) {
 
             {friendsList.map((friend) => {
               const friendRank = getHunterRank(friend.friendLevel);
-              let friendGlowClass = "border-b border-slate-900/40";
+              let friendGlowClass = "border-b border-white/10";
               if (friendRank === "S") {
-                friendGlowClass += " bg-yellow-950/5 border-l-2 border-l-yellow-500/80 shadow-[inset_4px_0_12px_rgba(234,179,8,0.06)]";
+                friendGlowClass += " border-l-2 border-l-[#E3D8FA]/80";
               } else if (friendRank === "A") {
-                friendGlowClass += " bg-purple-950/5 border-l-2 border-l-purple-500/80 shadow-[inset_4px_0_12px_rgba(147,51,234,0.06)]";
+                friendGlowClass += " border-l-2 border-l-[#C9B8F0]/80";
               } else if (friendRank === "B") {
-                friendGlowClass += " bg-blue-950/5 border-l-2 border-l-blue-500/80 shadow-[inset_4px_0_12px_rgba(59,130,246,0.06)]";
+                friendGlowClass += " border-l-2 border-l-[#8A5CF0]/80";
               } else if (friendRank === "C") {
-                friendGlowClass += " bg-green-950/5 border-l-2 border-l-green-500/80 shadow-[inset_4px_0_12px_rgba(34,197,94,0.06)]";
+                friendGlowClass += " border-l-2 border-l-[#9A8FB8]/80";
               }
 
               return (
                 <div key={friend.id} className={`flex items-center justify-between p-4 transition-all duration-300 ${friendGlowClass}`}>
                   <div className="flex items-center gap-4">
                     <div className="w-6 text-center flex items-center justify-center shrink-0">
-                      <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                      <ShieldCheck className="w-4 h-4 text-[#C9B8F0]" />
                     </div>
                     <div>
                       <div className="flex items-center gap-1.5">
-                        <span className="font-bold text-sm text-white">{friend.friendUsername}</span>
-                        <span className="text-[8.5px] uppercase font-bold text-gray-500 tracking-widest font-mono">
+                        <span className="font-bold text-sm text-[#EDE6FA]">{friend.friendUsername}</span>
+                        <span className="text-[8.5px] uppercase font-bold text-[#9A8FB8] tracking-widest font-mono">
                           [{friendRank}-Rank]
                         </span>
                       </div>
-                      <span className="text-[10px] text-gray-400 font-mono uppercase tracking-wider block">
+                      <span className="text-[10px] text-[#9A8FB8] font-mono uppercase tracking-wider block">
                         {friend.friendClass}
                       </span>
                     </div>
@@ -628,13 +628,13 @@ export function LeaderboardView({ currentUser }: LeaderboardViewProps) {
 
                   <div className="flex items-center gap-3">
                     <div className="text-right font-mono">
-                      <div className="text-yellow-400 text-sm font-black">Lv. {friend.friendLevel}</div>
-                      <div className="text-gray-500 text-[10px]">{friend.friendXp} XP</div>
+                      <div className="text-[#C9B8F0] text-sm font-black">Lv. {friend.friendLevel}</div>
+                      <div className="text-[#9A8FB8] text-[10px]">{friend.friendXp} XP</div>
                     </div>
                     <button
                       onClick={() => handleRemoveFriend(friend.friendUid)}
                       title="Dismiss Ally"
-                      className="p-2 text-slate-800 hover:text-red-500 hover:bg-red-950/30 rounded-lg transition-all cursor-pointer"
+                      className="p-2 text-[#9A8FB8] hover:text-rose-300/80 rounded-lg transition-all cursor-pointer"
                       style={{ minWidth: "44px", minHeight: "44px" }}
                     >
                       <Trash2 className="w-4 h-4" />

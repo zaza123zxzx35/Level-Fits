@@ -251,36 +251,33 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
 
   if (googleUserForSelection) {
     return (
-      <div className="w-full max-w-md mx-auto p-8 rounded-2xl border border-purple-550/30 bg-slate-900/90 shadow-2xl shadow-black relative overflow-hidden text-center z-10 my-8">
-        {/* Glow rings */}
-        <div className="absolute top-0 right-0 w-32 h-32 bg-purple-600/15 rounded-full blur-2xl pointer-events-none" />
-        <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-amber-500/10 rounded-full blur-2xl pointer-events-none" />
+      <div className="w-full max-w-md mx-auto p-8 frost rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.4)] relative overflow-hidden text-center z-10 my-8">
 
-        <h1 className="text-3xl font-extrabold uppercase tracking-widest text-[#7B2FBE] drop-shadow">
+        <h1 className="text-3xl font-display font-semibold uppercase tracking-widest text-[#C9B8F0]">
           ARISE HUNTER
         </h1>
-        <p className="text-gray-400 text-xs mt-1.5 uppercase font-[#7B2FBE] font-mono tracking-widest mb-6">
+        <p className="text-[#9A8FB8] text-xs mt-1.5 font-monument tracking-[0.3em] uppercase mb-6">
           Initialize your Hero Class Specialty
         </p>
 
         {errorText && (
-          <div className="mb-4 p-3 bg-red-950/40 border-2 border-dashed border-red-500/30 rounded-xl text-red-400 text-xs font-mono">
+          <div className="mb-4 p-3 bg-red-950/40 border border-dashed border-red-500/30 rounded-xl text-red-400 text-xs font-display">
             ⚠️ {errorText}
           </div>
         )}
 
         <form onSubmit={handleCreateGoogleProfile} className="space-y-4 text-left">
           <div>
-            <label className="text-gray-300 text-[10px] font-bold uppercase tracking-widest block mb-1 font-mono">
+            <label className="text-[#C9B8F0]/60 text-[10px] font-monument uppercase tracking-[0.3em] block mb-1">
               Soulbound Account
             </label>
-            <div className="w-full h-11 px-4 text-xs font-mono rounded-lg border-2 border-slate-800 bg-slate-950/60 text-gray-400 flex items-center overflow-x-auto whitespace-nowrap">
+            <div className="w-full h-11 px-4 text-xs font-display rounded-xl border border-white/10 bg-[#15101F] text-[#9A8FB8] flex items-center overflow-x-auto whitespace-nowrap">
               {googleUserForSelection.email}
             </div>
           </div>
 
           <div>
-            <label className="text-gray-300 text-[10px] font-bold uppercase tracking-widest block mb-1 font-mono">
+            <label className="text-[#C9B8F0]/60 text-[10px] font-monument uppercase tracking-[0.3em] block mb-1">
               Gamer Display Handle
             </label>
             <input
@@ -290,12 +287,12 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
               placeholder="e.g., Lancelot99, ShadowFiend"
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
-              className="w-full h-11 px-4 text-xs font-mono rounded-lg border-2 border-slate-800 bg-slate-950 text-white placeholder-gray-700 focus:outline-none focus:border-purple-500"
+              className="w-full h-11 px-4 text-xs rounded-xl border border-white/10 bg-[#15101F] text-[#EDE6FA] placeholder-[#9A8FB8] focus:outline-none focus:border-[#C9B8F0]/50"
             />
           </div>
 
           <div>
-            <label className="text-gray-300 text-[10px] font-bold uppercase tracking-widest block mb-2 font-mono">
+            <label className="text-[#C9B8F0]/60 text-[10px] font-monument uppercase tracking-[0.3em] block mb-2">
               Choose Heroic Guild Specialty
             </label>
             <div className="grid grid-cols-3 gap-2.5">
@@ -311,15 +308,15 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
                     key={hClass.name}
                     type="button"
                     onClick={() => setSelectedClass(hClass.name)}
-                    className={`flex flex-col items-center justify-center p-2 rounded-xl border-2 transition-all cursor-pointer text-center h-[90px] select-none ${
+                    className={`flex flex-col items-center justify-center p-2 rounded-xl border transition-all cursor-pointer text-center h-[90px] select-none ${
                       isSelected
-                        ? `${hClass.color} border-yellow-400`
-                        : "border-slate-800 bg-slate-950 hover:bg-slate-900/40 text-gray-500"
+                        ? "bg-[#3A2F58] border-[#C9B8F0]/40 text-[#C9B8F0]"
+                        : "border-white/10 bg-[#15101F] hover:bg-[#1d1729] text-[#9A8FB8]"
                     }`}
                   >
                     <ClassIcon className="w-5 h-5 mb-1" />
-                    <span className="text-[10px] font-black uppercase font-mono">{hClass.name}</span>
-                    <span className="text-[8px] opacity-75 mt-0.5 block font-mono font-bold leading-none">{hClass.spec}</span>
+                    <span className="text-[10px] font-display font-semibold uppercase">{hClass.name}</span>
+                    <span className="text-[8px] opacity-75 mt-0.5 block font-monument leading-none">{hClass.spec}</span>
                   </button>
                 );
               })}
@@ -329,23 +326,22 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
           <button
             type="submit"
             disabled={loading}
-            className="relative overflow-hidden group w-full h-12 bg-gradient-to-r from-purple-800 via-purple-700 to-purple-900 border-2 border-purple-500 text-white font-black uppercase text-xs tracking-widest rounded-lg shadow-lg hover:scale-[1.01] active:scale-[0.99] transition-all cursor-pointer disabled:opacity-40 flex items-center justify-center gap-2"
+            className="w-full h-12 bg-[#B9A3E3] hover:bg-[#C7B5EC] text-[#241B3A] font-display font-semibold text-xs tracking-widest rounded-full hover:scale-[1.01] active:scale-[0.99] transition-all cursor-pointer disabled:opacity-40 flex items-center justify-center gap-2"
             style={{ minHeight: "44px" }}
           >
             {loading ? (
-              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              <div className="w-5 h-5 border-2 border-[#241B3A] border-t-transparent rounded-full animate-spin" />
             ) : (
               <>
                 Finalize Awakening <Sparkles className="w-4 h-4" />
               </>
             )}
-            <div className="absolute inset-0 bg-white/10 -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
           </button>
 
           <button
             type="button"
             onClick={() => setGoogleUserForSelection(null)}
-            className="w-full text-xs font-mono text-gray-500 hover:text-gray-300 text-center block pt-2 underline cursor-pointer"
+            className="w-full text-xs font-display text-[#9A8FB8] hover:text-[#C7BBE2] text-center block pt-2 underline cursor-pointer"
             style={{ minHeight: "44px" }}
           >
             Back to Portal Select
@@ -356,43 +352,40 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
   }
 
   return (
-    <div className="w-full max-w-md mx-auto p-8 rounded-2xl border border-purple-550/30 bg-slate-900/90 shadow-2xl shadow-black relative overflow-hidden text-center z-10 my-8">
-      {/* Glow rings */}
-      <div className="absolute top-0 right-0 w-32 h-32 bg-purple-600/15 rounded-full blur-2xl pointer-events-none" />
-      <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-amber-500/10 rounded-full blur-2xl pointer-events-none" />
+    <div className="w-full max-w-md mx-auto p-8 frost rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.4)] relative overflow-hidden text-center z-10 my-8">
 
       {/* Title */}
-      <h1 className="text-4xl font-extrabold uppercase tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-yellow-100 via-yellow-400 to-amber-500 drop-shadow-[0_2px_4px_rgba(255,215,0,0.3)]">
+      <h1 className="text-4xl font-display font-semibold uppercase tracking-widest text-[#EDE6FA]">
         LevelFit
       </h1>
-      <p className="text-gray-400 text-xs mt-1.5 uppercase font-mono tracking-widest">
+      <p className="text-[#9A8FB8] text-xs mt-1.5 font-monument tracking-[0.3em] uppercase">
         The Dark Fantasy RPG Fitness Realm
       </p>
 
       {errorText && (
-        <div className="mt-4 p-3 bg-red-950/40 border-2 border-dashed border-red-500/30 rounded-xl text-red-400 text-xs font-mono text-left">
+        <div className="mt-4 p-3 bg-red-950/40 border border-dashed border-red-500/30 rounded-xl text-red-400 text-xs font-display text-left">
           ⚠️ {errorText}
         </div>
       )}
 
       {/* Interactive troubleshooting guide for auth/operation-not-allowed */}
       {isOpNotAllowed && (
-        <div className="mt-4 p-4 rounded-xl border border-amber-600/30 bg-amber-950/25 text-left font-mono text-xs text-gray-300 space-y-2">
-          <h3 className="text-amber-400 font-bold uppercase tracking-wider text-xs">
+        <div className="mt-4 p-4 rounded-xl border border-[#C9B8F0]/30 bg-[#15101F] text-left font-display text-xs text-[#C7BBE2] space-y-2">
+          <h3 className="text-[#C9B8F0] font-display font-semibold uppercase tracking-wider text-xs">
             Realm Config Required
           </h3>
           <p className="leading-relaxed text-[10px]">
             The <strong>Email/Password</strong> sign-in method is currently disabled in your Firebase project. To enable it:
           </p>
-          <ol className="text-[10px] text-gray-400 space-y-1 list-decimal list-inside leading-snug">
-            <li>Go to the <a href="https://console.firebase.google.com/" target="_blank" rel="noopener noreferrer" className="text-yellow-400 font-bold underline decoration-yellow-400/50">Firebase Console</a>.</li>
+          <ol className="text-[10px] text-[#9A8FB8] space-y-1 list-decimal list-inside leading-snug">
+            <li>Go to the <a href="https://console.firebase.google.com/" target="_blank" rel="noopener noreferrer" className="text-[#C9B8F0] font-semibold underline decoration-[#C9B8F0]/50">Firebase Console</a>.</li>
             <li>Select your current project.</li>
             <li>Under &quot;Build&quot; in the left panel, click <strong>Authentication</strong>.</li>
             <li>Go to the <strong>Sign-in method</strong> tab.</li>
             <li>Click <strong>Add new provider</strong> (or edit) &amp; choose <strong>Email/Password</strong>.</li>
             <li>Enable the toggle and click <strong>Save</strong>.</li>
           </ol>
-          <div className="pt-2 border-t border-slate-800 text-[10px] text-yellow-300 leading-snug">
+          <div className="pt-2 border-t border-white/10 text-[10px] text-[#C9B8F0] leading-snug">
             💡 <strong>Instant Bypass:</strong> Use the <strong>Google Sign-In</strong> button below. It requires zero configuration and works instantly!
           </div>
         </div>
@@ -401,7 +394,7 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
       <form onSubmit={handleSubmit} className="mt-6 space-y-4 text-left">
         {isSignUp && (
           <div>
-            <label className="text-gray-300 text-[10px] font-bold uppercase tracking-widest block mb-1 font-mono">
+            <label className="text-[#C9B8F0]/60 text-[10px] font-monument uppercase tracking-[0.3em] block mb-1">
               Gamer Display Handle
             </label>
             <input
@@ -411,13 +404,13 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
               placeholder="e.g., Lancelot99, ShadowFiend"
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
-              className="w-full h-11 px-4 text-xs font-mono rounded-lg border-2 border-slate-800 bg-slate-950 text-white placeholder-gray-700 focus:outline-none focus:border-purple-500"
+              className="w-full h-11 px-4 text-xs rounded-xl border border-white/10 bg-[#15101F] text-[#EDE6FA] placeholder-[#9A8FB8] focus:outline-none focus:border-[#C9B8F0]/50"
             />
           </div>
         )}
 
         <div>
-          <label className="text-gray-300 text-[10px] font-bold uppercase tracking-widest block mb-1 font-mono">
+          <label className="text-[#C9B8F0]/60 text-[10px] font-monument uppercase tracking-[0.3em] block mb-1">
             Spellbound Email
           </label>
           <input
@@ -426,12 +419,12 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
             placeholder="hero@realm.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full h-11 px-4 text-xs font-mono rounded-lg border-2 border-slate-800 bg-slate-950 text-white placeholder-gray-700 focus:outline-none focus:border-purple-500"
+            className="w-full h-11 px-4 text-xs rounded-xl border border-white/10 bg-[#15101F] text-[#EDE6FA] placeholder-[#9A8FB8] focus:outline-none focus:border-[#C9B8F0]/50"
           />
         </div>
 
         <div>
-          <label className="text-gray-300 text-[10px] font-bold uppercase tracking-widest block mb-1 font-mono">
+          <label className="text-[#C9B8F0]/60 text-[10px] font-monument uppercase tracking-[0.3em] block mb-1">
             Arcane Password
           </label>
           <div className="relative">
@@ -441,12 +434,12 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
               placeholder="••••••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full h-11 pl-4 pr-10 text-xs font-mono rounded-lg border-2 border-slate-800 bg-slate-950 text-white placeholder-gray-700 focus:outline-none focus:border-purple-500"
+              className="w-full h-11 pl-4 pr-10 text-xs rounded-xl border border-white/10 bg-[#15101F] text-[#EDE6FA] placeholder-[#9A8FB8] focus:outline-none focus:border-[#C9B8F0]/50"
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-3.5 text-gray-500 hover:text-gray-300 focus:outline-none"
+              className="absolute right-3 top-3.5 text-[#9A8FB8] hover:text-[#C7BBE2] focus:outline-none"
               style={{ minHeight: "44px" }}
             >
               {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -457,7 +450,7 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
         {/* Hero Class selection cards on sign up */}
         {isSignUp && (
           <div>
-            <label className="text-gray-300 text-[10px] font-bold uppercase tracking-widest block mb-2.5 font-mono">
+            <label className="text-[#C9B8F0]/60 text-[10px] font-monument uppercase tracking-[0.3em] block mb-2.5">
               Choose Heroic Guild Specialty
             </label>
             <div className="grid grid-cols-3 gap-2.5">
@@ -473,15 +466,15 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
                     key={hClass.name}
                     type="button"
                     onClick={() => setSelectedClass(hClass.name)}
-                    className={`flex flex-col items-center justify-center p-2 rounded-xl border-2 transition-all cursor-pointer text-center h-[90px] select-none ${
+                    className={`flex flex-col items-center justify-center p-2 rounded-xl border transition-all cursor-pointer text-center h-[90px] select-none ${
                       isSelected
-                        ? `${hClass.color} border-yellow-400`
-                        : "border-slate-800 bg-slate-950 hover:bg-slate-900/40 text-gray-500"
+                        ? "bg-[#3A2F58] border-[#C9B8F0]/40 text-[#C9B8F0]"
+                        : "border-white/10 bg-[#15101F] hover:bg-[#1d1729] text-[#9A8FB8]"
                     }`}
                   >
                     <ClassIcon className="w-5 h-5 mb-1" />
-                    <span className="text-[10px] font-black uppercase font-mono">{hClass.name}</span>
-                    <span className="text-[8px] opacity-75 mt-0.5 block font-mono font-bold leading-none">{hClass.spec}</span>
+                    <span className="text-[10px] font-display font-semibold uppercase">{hClass.name}</span>
+                    <span className="text-[8px] opacity-75 mt-0.5 block font-monument leading-none">{hClass.spec}</span>
                   </button>
                 );
               })}
@@ -493,39 +486,38 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
         <button
           type="submit"
           disabled={loading}
-          className="relative overflow-hidden group w-full h-12 bg-gradient-to-r from-purple-800 via-purple-700 to-purple-900 border-2 border-purple-500 text-white font-black uppercase text-xs tracking-widest rounded-lg shadow-lg hover:scale-[1.01] active:scale-[0.99] transition-all cursor-pointer disabled:opacity-40 flex items-center justify-center gap-2"
+          className="w-full h-12 bg-[#B9A3E3] hover:bg-[#C7B5EC] text-[#241B3A] font-display font-semibold text-xs tracking-widest rounded-full hover:scale-[1.01] active:scale-[0.99] transition-all cursor-pointer disabled:opacity-40 flex items-center justify-center gap-2"
           style={{ minHeight: "44px" }}
         >
           {loading ? (
-            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            <div className="w-5 h-5 border-2 border-[#241B3A] border-t-transparent rounded-full animate-spin" />
           ) : (
             <>
               {isSignUp ? "Manifest Character" : "Enter Portal"} <Sparkles className="w-4 h-4" />
             </>
           )}
-          <div className="absolute inset-0 bg-white/10 -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
         </button>
       </form>
 
       {/* Google authentication bypass and Instant local bypass */}
       <div className="mt-5 space-y-3">
         <div className="relative flex py-1 items-center">
-          <div className="flex-grow border-t border-slate-800/80"></div>
-          <span className="flex-shrink mx-3 text-slate-500 text-[9px] font-bold uppercase font-mono tracking-widest">OR</span>
-          <div className="flex-grow border-t border-slate-800/80"></div>
+          <div className="flex-grow border-t border-white/10"></div>
+          <span className="flex-shrink mx-3 text-[#9A8FB8] text-[9px] font-monument uppercase tracking-[0.3em]">OR</span>
+          <div className="flex-grow border-t border-white/10"></div>
         </div>
 
         <button
           type="button"
           onClick={handleGoogleSignIn}
           disabled={loading}
-          className="w-full h-11 bg-slate-100/5 hover:bg-slate-100/10 border-2 border-slate-800 hover:border-purple-500 text-white font-black uppercase text-[10px] tracking-widest rounded-lg transition-all cursor-pointer flex items-center justify-center gap-2"
+          className="w-full h-11 frost text-[#C7BBE2] font-display font-semibold uppercase text-[10px] tracking-widest rounded-full transition-all cursor-pointer flex items-center justify-center gap-2"
           style={{ minHeight: "44px" }}
         >
-          <img 
-            src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" 
-            alt="Google" 
-            className="w-4 h-4" 
+          <img
+            src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
+            alt="Google"
+            className="w-4 h-4"
             referrerPolicy="no-referrer"
           />
           Enter via Google Core SSO
@@ -535,19 +527,19 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
           type="button"
           onClick={handleGuestSignIn}
           disabled={loading}
-          className="w-full h-11 bg-gradient-to-r from-amber-600 via-amber-700 to-amber-800 hover:from-amber-500 hover:to-amber-700 border-2 border-amber-500 hover:border-yellow-400 text-white font-black uppercase text-[10px] tracking-widest rounded-lg shadow-lg hover:scale-[1.01] transition-all cursor-pointer flex items-center justify-center gap-2 animate-pulse hover:animate-none"
+          className="w-full h-11 bg-[#B9A3E3] hover:bg-[#C7B5EC] text-[#241B3A] font-display font-semibold uppercase text-[10px] tracking-widest rounded-full hover:scale-[1.01] transition-all cursor-pointer flex items-center justify-center gap-2"
           style={{ minHeight: "44px" }}
         >
-          <Sparkles className="w-4 h-4 text-yellow-300" />
+          <Sparkles className="w-4 h-4 text-[#241B3A]" />
           Offline Demo Portal (Instant Play)
         </button>
-        <span className="block text-[9px] text-gray-500 font-mono text-center">
+        <span className="block text-[9px] text-[#9A8FB8] font-display text-center">
           ⚡ Bypasses Firebase Auth restrictions & saves all progress locally
         </span>
       </div>
 
       {/* Switch mode */}
-      <div className="mt-6 text-xs font-mono text-gray-500">
+      <div className="mt-6 text-xs font-display text-[#9A8FB8]">
         {isSignUp ? "Already initialized a hero?" : "Manifest your destiny in this fitness realm?"}{" "}
         <button
           type="button"
@@ -555,7 +547,7 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
             setIsSignUp(!isSignUp);
             setErrorText("");
           }}
-          className="text-yellow-400 hover:text-yellow-300 font-bold underline cursor-pointer hover:scale-105 transition-transform"
+          className="text-[#C9B8F0] hover:text-[#C7B5EC] font-semibold underline cursor-pointer hover:scale-105 transition-transform"
           style={{ minHeight: "44px", padding: "4px" }}
         >
           {isSignUp ? "Ascend Existing Hero" : "Awaken Starter Hero"}

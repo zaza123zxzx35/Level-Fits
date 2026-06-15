@@ -8,40 +8,40 @@ interface RankBadgeProps {
 }
 
 export function RankBadge({ rank, className = "", size = "md" }: RankBadgeProps) {
-  let strokeColor = "#64748B";
-  let glowColor = "rgba(148, 163, 184, 0.35)";
-  let textColor = "#94A3B8";
+  let strokeColor = "#9A8FB8";
+  let glowColor = "rgba(154, 143, 184, 0.35)";
+  let textColor = "#9A8FB8";
   let badgeTitle = "E-Rank";
 
   if (rank === "E") {
-    strokeColor = "#64748B";
-    glowColor = "rgba(148, 163, 184, 0.3)";
-    textColor = "#cbd5e1";
+    strokeColor = "#9A8FB8";
+    glowColor = "rgba(154, 143, 184, 0.3)";
+    textColor = "#C7BBE2";
     badgeTitle = "E-Rank";
   } else if (rank === "D") {
-    strokeColor = "#06B6D4";
-    glowColor = "rgba(6, 182, 212, 0.4)";
-    textColor = "#22D3EE";
+    strokeColor = "#8A5CF0";
+    glowColor = "rgba(138, 92, 240, 0.4)";
+    textColor = "#C9B8F0";
     badgeTitle = "D-Rank";
   } else if (rank === "C") {
-    strokeColor = "#10B981";
-    glowColor = "rgba(16, 185, 129, 0.4)";
-    textColor = "#34D399";
+    strokeColor = "#8A5CF0";
+    glowColor = "rgba(138, 92, 240, 0.45)";
+    textColor = "#C9B8F0";
     badgeTitle = "C-Rank";
   } else if (rank === "B") {
-    strokeColor = "#8B5CF6";
-    glowColor = "rgba(139, 92, 246, 0.5)";
-    textColor = "#C084FC";
+    strokeColor = "#8A5CF0";
+    glowColor = "rgba(138, 92, 240, 0.5)";
+    textColor = "#C9B8F0";
     badgeTitle = "B-Rank";
   } else if (rank === "A") {
-    strokeColor = "#F43F5E";
-    glowColor = "rgba(244, 63, 94, 0.6)";
-    textColor = "#FB7185";
+    strokeColor = "#C9B8F0";
+    glowColor = "rgba(201, 184, 240, 0.55)";
+    textColor = "#E3D8FA";
     badgeTitle = "A-Rank";
   } else if (rank === "S") {
-    strokeColor = "#00D4FF";
-    glowColor = "rgba(0, 212, 255, 0.8)";
-    textColor = "#00D4FF";
+    strokeColor = "#C9B8F0";
+    glowColor = "rgba(201, 184, 240, 0.8)";
+    textColor = "#E3D8FA";
     badgeTitle = "S-Rank";
   }
 

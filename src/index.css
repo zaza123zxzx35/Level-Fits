@@ -1,9 +1,43 @@
 @import "tailwindcss";
 
-/* Solo Leveling "AWAKEN" elegant serif display */
+/* ===== Solo Leveling "AWAKEN" design system ===== */
+:root {
+  --aw-bg: #0e0b16;        /* app backdrop */
+  --aw-bg-2: #15101f;      /* phone frame */
+  --aw-ink: #ede6fa;       /* bright heading text */
+  --aw-lav: #c9b8f0;       /* primary lavender accent */
+  --aw-lav-soft: #b9a3e3;  /* CTA button */
+  --aw-muted: #9a8fb8;     /* secondary text */
+  --aw-line: rgba(201, 184, 240, 0.12); /* hairline border */
+}
+
+html,
+body {
+  background: var(--aw-bg);
+}
+
+/* Elegant serif display */
 .font-display {
   font-family: "Cormorant Garamond", Georgia, "Times New Roman", serif;
 }
 .font-monument {
   font-family: "Cinzel", "Cormorant Garamond", Georgia, serif;
+}
+
+/* Frosted-glass surface used across the app */
+.frost {
+  background: rgba(42, 34, 64, 0.45);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(201, 184, 240, 0.12);
+}
+
+/* Soft lavender scrollbar to match the theme */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(201, 184, 240, 0.25);
+  border-radius: 6px;
 }

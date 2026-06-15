@@ -631,12 +631,6 @@ export function TransformationView({ currentUser, onReward, onLockChange }: Tran
 function SLStyles() {
   return (
     <style>{`
-      .frost {
-        background: rgba(42, 34, 64, 0.45);
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-        border: 1px solid rgba(201, 184, 240, 0.12);
-      }
       @keyframes slFlash {
         0% { opacity: 0; transform: translateY(-14px) scale(0.96); }
         12% { opacity: 1; transform: translateY(0) scale(1); }

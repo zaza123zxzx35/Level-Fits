@@ -743,15 +743,15 @@ export default function App() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-[#0A0E1A] flex flex-col items-center justify-center text-gray-400 font-mono gap-3.5">
-        <Loader2 className="w-8 h-8 text-yellow-400 animate-spin" />
-        <span>Syncing Hero Data...</span>
+      <div className="min-h-screen bg-[#0E0B16] flex flex-col items-center justify-center text-[#9A8FB8] gap-3.5">
+        <Loader2 className="w-8 h-8 text-[#C9B8F0] animate-spin" />
+        <span className="font-display text-lg tracking-widest">Syncing Hero Data…</span>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white flex flex-col relative py-0 select-none">
+    <div className="min-h-screen bg-[#0E0B16] text-[#EDE6FA] flex flex-col relative py-0 select-none">
       {/* Particle background ember floating */}
       <ParticleBackground />
 
@@ -778,7 +778,7 @@ export default function App() {
 
           {/* Right Door */}
           <div
-            className="w-1/2 h-full border-l border-[#00D4FF]/30 flex flex-col justify-center items-start pl-8 transition-transform duration-[1200ms] cubic-bezier(0.77, 0, 0.175, 1) pointer-events-auto shadow-[-15px_0_30px_rgba(0,0,0,0.85)]"
+            className="w-1/2 h-full border-l border-[#C9B8F0]/30 flex flex-col justify-center items-start pl-8 transition-transform duration-[1200ms] cubic-bezier(0.77, 0, 0.175, 1) pointer-events-auto shadow-[-15px_0_30px_rgba(0,0,0,0.85)]"
             style={{
               transform: gatesOpen ? "translateX(100%)" : "translateX(0%)",
               backgroundImage: "radial-gradient(circle at left, #0A1424 0%, #030611 100%)"
@@ -786,9 +786,9 @@ export default function App() {
           >
             {/* Right Door graphics */}
             <div className="max-w-[180px] text-left font-mono space-y-3 opacity-60">
-              <div className="text-[10px] text-[#00D4FF] tracking-widest font-bold font-mono">SYSTEM LOADING</div>
+              <div className="text-[10px] text-[#C9B8F0] tracking-widest font-bold font-mono">SYSTEM LOADING</div>
               <p className="text-[8px] text-gray-500 font-bold tracking-tight">REALM_HUNTER_GATE_02</p>
-              <div className="text-xs text-cyan-400 font-extrabold leading-none tracking-widest select-none uppercase animate-pulse">
+              <div className="text-xs text-[#C9B8F0] font-extrabold leading-none tracking-widest select-none uppercase animate-pulse">
                 SYSTEM_LINK_ACTIVE
               </div>
             </div>
@@ -800,8 +800,8 @@ export default function App() {
               gatesOpen ? "scale-0 opacity-0 rotate-180" : "scale-100 opacity-100"
             }`}
           >
-            <div className="absolute inset-1 border border-dashed border-cyan-400 rounded-full animate-spin" />
-            <span className="text-[#00D4FF] font-mono font-black text-xl tracking-wider select-none animate-pulse">
+            <div className="absolute inset-1 border border-dashed border-[#C9B8F0]/50 rounded-full animate-spin" />
+            <span className="text-[#C9B8F0] font-mono font-black text-xl tracking-wider select-none animate-pulse">
               S-GATE
             </span>
           </div>
@@ -820,11 +820,11 @@ export default function App() {
 
       {/* Main framed Smartphone layout mock to simulate native mobile experience */}
       <div className="flex-1 flex justify-center items-stretch py-0 md:py-8 w-full z-10">
-        <div className="w-full max-w-md bg-[#0A0E1A] md:rounded-[40px] md:border-[10px] md:border-slate-800 shadow-[0_0_60px_rgba(123,47,190,0.15)] md:aspect-[9/19.5] flex flex-col relative overflow-hidden">
-          
+        <div className="w-full max-w-md bg-[#15101F] md:rounded-[40px] md:border-[10px] md:border-[#241B33] shadow-[0_0_60px_rgba(124,95,192,0.18)] md:aspect-[9/19.5] flex flex-col relative overflow-hidden">
+
           {/* Mock Speaker/Camera Phone notch */}
-          <div className="hidden md:flex justify-center absolute top-2 left-1/2 -translate-x-1/2 w-32 h-6 bg-slate-800 rounded-b-2xl z-50">
-            <div className="w-12 h-1 bg-slate-900 rounded mt-1" />
+          <div className="hidden md:flex justify-center absolute top-2 left-1/2 -translate-x-1/2 w-32 h-6 bg-[#241B33] rounded-b-2xl z-50">
+            <div className="w-12 h-1 bg-[#15101F] rounded mt-1" />
           </div>
 
           {!currentUser ? (
@@ -837,11 +837,11 @@ export default function App() {
           ) : (
             <>
               {/* Game HUD Bar header */}
-              <div className="px-5 pt-7 pb-4 bg-slate-950/90 border-b border-purple-550/20 flex justify-between items-center relative z-25">
+              <div className="px-5 pt-7 pb-4 bg-[#15101F]/90 border-b border-white/10 flex justify-between items-center relative z-25">
                 <div className="flex items-center gap-2">
-                  <div className="w-1.5 h-6 bg-[#7B2FBE] rounded-full" />
-                  <span className="text-yellow-400 font-black font-sans uppercase tracking-widest text-sm">
-                    LevelFit
+                  <div className="w-1.5 h-6 bg-[#B9A3E3] rounded-full" />
+                  <span className="text-[#EDE6FA] font-monument tracking-[0.3em] text-base">
+                    LEVELFIT
                   </span>
                 </div>
 
@@ -854,9 +854,9 @@ export default function App() {
                       if (state) sfx.playClick();
                     }}
                     className={`p-1.5 rounded-full border transition-all cursor-pointer flex items-center justify-center ${
-                      sfxEnabled 
-                        ? "bg-purple-900/20 border-purple-500/35 text-purple-300 shadow-[0_0_8px_rgba(123,47,190,0.3)] hover:bg-purple-900/40"
-                        : "bg-slate-900 border-slate-800 text-gray-500 hover:text-gray-400"
+                      sfxEnabled
+                        ? "bg-[#3A2F58]/50 border-[#C9B8F0]/30 text-[#C9B8F0] hover:bg-[#3A2F58]/70"
+                        : "bg-[#15101F] border-white/10 text-[#9A8FB8] hover:text-[#C7BBE2]"
                     }`}
                     title={sfxEnabled ? "System audio: ON" : "System audio: LOCKED"}
                     style={{ minWidth: "32px", minHeight: "32px" }}
@@ -865,12 +865,12 @@ export default function App() {
                   </button>
 
                   {/* Streak */}
-                  <div className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-900 border border-slate-800 rounded-full text-xs text-amber-500 font-bold">
-                    <Flame className="w-4 h-4 text-amber-500 animate-bounce" /> {currentUser.streak}d
+                  <div className="flex items-center gap-1.5 px-2.5 py-1 frost rounded-full text-xs text-[#C9B8F0] font-medium">
+                    <Flame className="w-4 h-4 text-[#C9B8F0]" /> {currentUser.streak}d
                   </div>
 
                   {/* Level text */}
-                  <div className="px-2.5 py-1 bg-gradient-to-r from-purple-950 to-slate-900 border border-[#7B2FBE]/30 rounded-full text-xs text-yellow-300 font-bold">
+                  <div className="px-2.5 py-1 frost rounded-full text-xs text-[#EDE6FA] font-medium">
                     Lv. {currentUser.level}
                   </div>
                 </div>
@@ -925,13 +925,13 @@ export default function App() {
                 {activeTab === "character" && (
                   <div className="space-y-5">
                     {/* Character sub-tabs */}
-                    <div className="grid grid-cols-3 p-1 bg-slate-950/80 border border-slate-800 rounded-xl gap-1">
+                    <div className="grid grid-cols-3 p-1 frost rounded-xl gap-1">
                       <button
                         onClick={() => changeCharSubTab("status")}
                         className={`py-2 text-[10px] font-black font-mono uppercase tracking-wider rounded-lg transition-all cursor-pointer text-center ${
                           charSubTab === "status"
-                            ? "bg-purple-900/40 border border-purple-500/20 text-yellow-300 shadow"
-                            : "text-gray-500 hover:text-gray-300"
+                            ? "bg-[#3A2F58]/60 border border-[#C9B8F0]/30 text-[#C9B8F0]"
+                            : "text-[#9A8FB8] hover:text-[#C7BBE2]"
                         }`}
                         style={{ minHeight: "44px" }}
                       >
@@ -941,8 +941,8 @@ export default function App() {
                         onClick={() => changeCharSubTab("quests")}
                         className={`py-2 text-[10px] font-black font-mono uppercase tracking-wider rounded-lg transition-all cursor-pointer text-center ${
                           charSubTab === "quests"
-                            ? "bg-purple-900/40 border border-purple-500/20 text-yellow-300 shadow"
-                            : "text-gray-500 hover:text-gray-300"
+                            ? "bg-[#3A2F58]/60 border border-[#C9B8F0]/30 text-[#C9B8F0]"
+                            : "text-[#9A8FB8] hover:text-[#C7BBE2]"
                         }`}
                         style={{ minHeight: "44px" }}
                       >
@@ -952,8 +952,8 @@ export default function App() {
                         onClick={() => changeCharSubTab("achievements")}
                         className={`py-2 text-[10px] font-black font-mono uppercase tracking-wider rounded-lg transition-all cursor-pointer text-center ${
                           charSubTab === "achievements"
-                            ? "bg-purple-900/40 border border-purple-500/20 text-yellow-300 shadow"
-                            : "text-gray-500 hover:text-gray-300"
+                            ? "bg-[#3A2F58]/60 border border-[#C9B8F0]/30 text-[#C9B8F0]"
+                            : "text-[#9A8FB8] hover:text-[#C7BBE2]"
                         }`}
                         style={{ minHeight: "44px" }}
                       >
@@ -1007,11 +1007,11 @@ export default function App() {
               </main>
 
               {/* Persistent Bottom Mobile Navigation Rail */}
-              <nav className="absolute bottom-0 left-0 right-0 h-16 bg-slate-950/95 border-t border-purple-550/15 flex justify-around items-stretch z-30 pb-safe px-2">
+              <nav className="absolute bottom-0 left-0 right-0 h-16 bg-[#15101F]/95 border-t border-white/10 flex justify-around items-stretch z-30 pb-safe px-2">
                 <button
                   onClick={() => changeTab("home")}
                   className={`flex flex-col items-center justify-center flex-1 cursor-pointer transition-colors ${
-                    activeTab === "home" ? "text-yellow-400" : "text-gray-500 hover:text-gray-300"
+                    activeTab === "home" ? "text-[#C9B8F0]" : "text-[#9A8FB8] hover:text-[#C7BBE2]"
                   }`}
                   style={{ minWidth: "44px", minHeight: "44px" }}
                 >
@@ -1022,7 +1022,7 @@ export default function App() {
                 <button
                   onClick={() => changeTab("transformation")}
                   className={`flex flex-col items-center justify-center flex-1 cursor-pointer transition-colors ${
-                    activeTab === "transformation" ? "text-yellow-400" : "text-gray-500 hover:text-gray-300"
+                    activeTab === "transformation" ? "text-[#C9B8F0]" : "text-[#9A8FB8] hover:text-[#C7BBE2]"
                   }`}
                   style={{ minWidth: "44px", minHeight: "44px" }}
                 >
@@ -1033,7 +1033,7 @@ export default function App() {
                 <button
                   onClick={() => changeTab("workout")}
                   className={`flex flex-col items-center justify-center flex-1 cursor-pointer transition-colors ${
-                    activeTab === "workout" ? "text-yellow-400" : "text-gray-500 hover:text-gray-300"
+                    activeTab === "workout" ? "text-[#C9B8F0]" : "text-[#9A8FB8] hover:text-[#C7BBE2]"
                   }`}
                   style={{ minWidth: "44px", minHeight: "44px" }}
                 >
@@ -1044,7 +1044,7 @@ export default function App() {
                 <button
                   onClick={() => changeTab("character")}
                   className={`flex flex-col items-center justify-center flex-1 cursor-pointer transition-colors ${
-                    activeTab === "character" ? "text-yellow-400" : "text-gray-500 hover:text-gray-300"
+                    activeTab === "character" ? "text-[#C9B8F0]" : "text-[#9A8FB8] hover:text-[#C7BBE2]"
                   }`}
                   style={{ minWidth: "44px", minHeight: "44px" }}
                 >
@@ -1055,7 +1055,7 @@ export default function App() {
                 <button
                   onClick={() => changeTab("leaderboard")}
                   className={`flex flex-col items-center justify-center flex-1 cursor-pointer transition-colors ${
-                    activeTab === "leaderboard" ? "text-yellow-400" : "text-gray-500 hover:text-gray-300"
+                    activeTab === "leaderboard" ? "text-[#C9B8F0]" : "text-[#9A8FB8] hover:text-[#C7BBE2]"
                   }`}
                   style={{ minWidth: "44px", minHeight: "44px" }}
                 >
@@ -1066,7 +1066,7 @@ export default function App() {
                 <button
                   onClick={() => changeTab("profile")}
                   className={`flex flex-col items-center justify-center flex-1 cursor-pointer transition-colors ${
-                    activeTab === "profile" ? "text-yellow-400" : "text-gray-500 hover:text-gray-300"
+                    activeTab === "profile" ? "text-[#C9B8F0]" : "text-[#9A8FB8] hover:text-[#C7BBE2]"
                   }`}
                   style={{ minWidth: "44px", minHeight: "44px" }}
                 >
