@@ -13,17 +13,18 @@ import { QuestsView } from "./components/QuestsView";
 import { LeaderboardView } from "./components/LeaderboardView";
 import { ProfileView } from "./components/ProfileView";
 import { AchievementsView } from "./components/AchievementsView";
+import { TransformationView } from "./components/TransformationView";
 import { Home, Dumbbell, Shield, Trophy, User, Sparkles, Flame, LogOut, Loader2, Compass, Volume2, VolumeX } from "lucide-react";
 import { sfx } from "./utils/audio";
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"home" | "workout" | "character" | "leaderboard" | "profile">("home");
+  const [activeTab, setActiveTab] = useState<"home" | "transformation" | "workout" | "character" | "leaderboard" | "profile">("home");
   const [charSubTab, setCharSubTab] = useState<"status" | "quests" | "achievements">("status");
   const [sfxEnabled, setSfxEnabled] = useState(sfx.getEnabled());
 
-  const changeTab = (tab: "home" | "workout" | "character" | "leaderboard" | "profile") => {
+  const changeTab = (tab: "home" | "transformation" | "workout" | "character" | "leaderboard" | "profile") => {
     setActiveTab(tab);
     sfx.playClick();
   };
@@ -784,6 +785,10 @@ export default function App() {
                   />
                 )}
 
+                {activeTab === "transformation" && (
+                  <TransformationView currentUser={currentUser} />
+                )}
+
                 {activeTab === "workout" && (
                   <div className="space-y-6">
                     <WorkoutLogger onLogWorkout={handleLogWorkout} isLogging={workoutSaving} workoutHistory={workoutHistory} />
@@ -888,6 +893,17 @@ export default function App() {
                 </button>
 
                 <button
+                  onClick={() => changeTab("transformation")}
+                  className={`flex flex-col items-center justify-center flex-1 cursor-pointer transition-colors ${
+                    activeTab === "transformation" ? "text-yellow-400" : "text-gray-500 hover:text-gray-300"
+                  }`}
+                  style={{ minWidth: "44px", minHeight: "44px" }}
+                >
+                  <RuneScrollIcon className={`w-5 h-5 ${activeTab === "transformation" ? "scale-110" : ""}`} />
+                  <span className="text-[9px] font-bold tracking-widest uppercase font-mono mt-1">21-Day</span>
+                </button>
+
+                <button
                   onClick={() => changeTab("workout")}
                   className={`flex flex-col items-center justify-center flex-1 cursor-pointer transition-colors ${
                     activeTab === "workout" ? "text-yellow-400" : "text-gray-500 hover:text-gray-300"
@@ -972,6 +988,18 @@ function HelmetIcon(props: React.SVGProps<SVGSVGElement>) {
       <path d="M5 11h14" strokeWidth="2" />
       <path d="M9 11v5" />
       <path d="M15 11v5" />
+    </svg>
+  );
+}
+
+function RuneScrollIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <rect x="4" y="3" width="16" height="18" rx="2" />
+      <path d="M8 8h8" />
+      <path d="M8 12h8" />
+      <path d="M8 16h5" />
+      <circle cx="17.5" cy="16.5" r="0.8" fill="currentColor" stroke="none" />
     </svg>
   );
 }

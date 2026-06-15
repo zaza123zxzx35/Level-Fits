@@ -141,6 +141,12 @@ service cloud.firestore {
         allow delete: if isOwner(userId);
       }
 
+      // Solo Leveling meta state (guild boss, active gate, 21-day transformation)
+      // Owner-only; small documents scoped under the user's own profile.
+      match /soloLeveling/{docId} {
+        allow read, write: if isOwner(userId) && isValidId(docId);
+      }
+
       match /friends/{friendId} {
         allow get, list: if isOwner(userId);
         
