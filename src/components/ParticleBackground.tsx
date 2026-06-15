@@ -25,8 +25,8 @@ export function ParticleBackground() {
     let animationId: number;
     let particles: Particle[] = [];
 
-    // Electric blue (#00C8FF) and Dark Purple (#7B2FBE) shadow embers
-    const colors = ["rgba(0, 200, 255, ", "rgba(123, 47, 190, ", "rgba(88, 28, 135, ", "rgba(139, 92, 246, "];
+    // AWAKEN lavender / violet mana embers
+    const colors = ["rgba(201, 184, 240, ", "rgba(138, 92, 240, ", "rgba(124, 95, 192, ", "rgba(185, 163, 227, "];
 
     const createParticle = (width: number, height: number, initAtBottom = false): Particle => {
       return {
@@ -72,7 +72,7 @@ export function ParticleBackground() {
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
         ctx.fillStyle = `${p.color}${p.alpha})`;
-        ctx.shadowColor = p.color === "rgba(0, 200, 255, " ? "#00C8FF" : "#7B2FBE";
+        ctx.shadowColor = p.color === "rgba(201, 184, 240, " ? "#C9B8F0" : "#8A5CF0";
         ctx.shadowBlur = 8;
         ctx.fill();
 
@@ -97,7 +97,7 @@ export function ParticleBackground() {
 
   return (
     <div ref={containerRef} className="absolute inset-0 pointer-events-none w-full h-full overflow-hidden z-[0]">
-      <canvas ref={canvasRef} className="block w-full h-full bg-[#0D0D1A] opacity-50" />
+      <canvas ref={canvasRef} className="block w-full h-full bg-[#0E0B16] opacity-50" />
     </div>
   );
 }

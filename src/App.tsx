@@ -10,20 +10,23 @@ import { HomeOverview } from "./components/HomeOverview";
 import { WorkoutLogger } from "./components/WorkoutLogger";
 import { CharacterProfile } from "./components/CharacterProfile";
 import { QuestsView } from "./components/QuestsView";
-import { LeaderboardView } from "./components/LeaderboardView";
 import { ProfileView } from "./components/ProfileView";
 import { AchievementsView } from "./components/AchievementsView";
-import { Home, Dumbbell, Shield, Trophy, User, Sparkles, Flame, LogOut, Loader2, Compass, Volume2, VolumeX } from "lucide-react";
+import { TransformationView } from "./components/TransformationView";
+import { Home, Dumbbell, Shield, User, Sparkles, Flame, LogOut, Loader2, Compass, Volume2, VolumeX, Lock } from "lucide-react";
 import { sfx } from "./utils/audio";
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"home" | "workout" | "character" | "leaderboard" | "profile">("home");
+  const [activeTab, setActiveTab] = useState<"home" | "transformation" | "workout" | "character" | "profile">("home");
   const [charSubTab, setCharSubTab] = useState<"status" | "quests" | "achievements">("status");
   const [sfxEnabled, setSfxEnabled] = useState(sfx.getEnabled());
 
-  const changeTab = (tab: "home" | "workout" | "character" | "leaderboard" | "profile") => {
+  // Discipline Lock: when enabled and today's core ritual isn't done, other screens are blocked
+  const [disciplineLocked, setDisciplineLocked] = useState(false);
+
+  const changeTab = (tab: "home" | "transformation" | "workout" | "character" | "profile") => {
     setActiveTab(tab);
     sfx.playClick();
   };
@@ -173,6 +176,51 @@ export default function App() {
     return () => {
       unsubWorkouts();
       unsubQuests();
+    };
+  }, [currentUser?.uid]);
+
+  // Evaluate Discipline Lock on login (so it is enforced before the 21-Day tab is opened)
+  useEffect(() => {
+    if (!currentUser) {
+      setDisciplineLocked(false);
+      return;
+    }
+    let cancelled = false;
+    const checkLock = async () => {
+      try {
+        let st: any = null;
+        if (currentUser.uid.startsWith("guest_")) {
+          const raw = localStorage.getItem(`transformation_${currentUser.uid}`);
+          st = raw ? JSON.parse(raw) : null;
+        } else {
+          const ref = doc(db, `users/${currentUser.uid}/soloLeveling`, "transformation");
+          const snap = await getDoc(ref);
+          st = snap.exists() ? snap.data() : null;
+        }
+
+        if (!st || !st.disciplineLock || !st.startDate) {
+          if (!cancelled) setDisciplineLocked(false);
+          return;
+        }
+
+        const start = new Date(st.startDate + "T00:00:00").getTime();
+        const today = new Date(new Date().toISOString().split("T")[0] + "T00:00:00").getTime();
+        const dayNum = Math.floor((today - start) / 86400000) + 1;
+
+        if (dayNum < 1 || dayNum > 21) {
+          if (!cancelled) setDisciplineLocked(false);
+          return;
+        }
+
+        const done = st.completions?.[dayNum];
+        if (!cancelled) setDisciplineLocked(!(done && done.workout));
+      } catch (e) {
+        if (!cancelled) setDisciplineLocked(false);
+      }
+    };
+    checkLock();
+    return () => {
+      cancelled = true;
     };
   }, [currentUser?.uid]);
 
@@ -638,17 +686,71 @@ export default function App() {
     }
   };
 
+  // Reward XP + stat points when a Transformation day (or the final boss) is cleared
+  const handleTransformationReward = async (xpReward: number, statReward: number) => {
+    if (!currentUser) return;
+
+    let totalXp = currentUser.xp + xpReward;
+    let userLevel = currentUser.level;
+    let shouldLevelUpAnim = false;
+    let gainedStatPoints = statReward;
+
+    while (totalXp >= 1000) {
+      totalXp -= 1000;
+      userLevel += 1;
+      shouldLevelUpAnim = true;
+      gainedStatPoints += 5;
+    }
+
+    const finalStatPoints = (currentUser.statPoints || 0) + gainedStatPoints;
+
+    try {
+      sfx.playQuestComplete();
+    } catch (e) {}
+
+    if (currentUser.uid.startsWith("guest_")) {
+      const updatedLocalProfile: UserProfile = {
+        ...currentUser,
+        xp: totalXp,
+        level: userLevel,
+        statPoints: finalStatPoints
+      };
+      localStorage.setItem(`profile_${currentUser.uid}`, JSON.stringify(updatedLocalProfile));
+      setCurrentUser(updatedLocalProfile);
+    } else {
+      try {
+        const userRef = doc(db, "users", currentUser.uid);
+        await updateDoc(userRef, {
+          xp: totalXp,
+          level: userLevel,
+          statPoints: finalStatPoints
+        });
+        await loadUserProfile(currentUser.uid);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    if (shouldLevelUpAnim) {
+      setLevelUpTarget(userLevel);
+      setLevelUpVisible(true);
+      try {
+        sfx.playLevelUp();
+      } catch (e) {}
+    }
+  };
+
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-[#0A0E1A] flex flex-col items-center justify-center text-gray-400 font-mono gap-3.5">
-        <Loader2 className="w-8 h-8 text-yellow-400 animate-spin" />
-        <span>Syncing Hero Data...</span>
+      <div className="min-h-screen bg-[#0E0B16] flex flex-col items-center justify-center text-[#9A8FB8] gap-3.5">
+        <Loader2 className="w-8 h-8 text-[#C9B8F0] animate-spin" />
+        <span className="font-display text-lg tracking-widest">Syncing Hero Data…</span>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white flex flex-col relative py-0 select-none">
+    <div className="min-h-screen bg-[#0E0B16] text-[#EDE6FA] flex flex-col relative py-0 select-none">
       {/* Particle background ember floating */}
       <ParticleBackground />
 
@@ -675,7 +777,7 @@ export default function App() {
 
           {/* Right Door */}
           <div
-            className="w-1/2 h-full border-l border-[#00D4FF]/30 flex flex-col justify-center items-start pl-8 transition-transform duration-[1200ms] cubic-bezier(0.77, 0, 0.175, 1) pointer-events-auto shadow-[-15px_0_30px_rgba(0,0,0,0.85)]"
+            className="w-1/2 h-full border-l border-[#C9B8F0]/30 flex flex-col justify-center items-start pl-8 transition-transform duration-[1200ms] cubic-bezier(0.77, 0, 0.175, 1) pointer-events-auto shadow-[-15px_0_30px_rgba(0,0,0,0.85)]"
             style={{
               transform: gatesOpen ? "translateX(100%)" : "translateX(0%)",
               backgroundImage: "radial-gradient(circle at left, #0A1424 0%, #030611 100%)"
@@ -683,9 +785,9 @@ export default function App() {
           >
             {/* Right Door graphics */}
             <div className="max-w-[180px] text-left font-mono space-y-3 opacity-60">
-              <div className="text-[10px] text-[#00D4FF] tracking-widest font-bold font-mono">SYSTEM LOADING</div>
+              <div className="text-[10px] text-[#C9B8F0] tracking-widest font-bold font-mono">SYSTEM LOADING</div>
               <p className="text-[8px] text-gray-500 font-bold tracking-tight">REALM_HUNTER_GATE_02</p>
-              <div className="text-xs text-cyan-400 font-extrabold leading-none tracking-widest select-none uppercase animate-pulse">
+              <div className="text-xs text-[#C9B8F0] font-extrabold leading-none tracking-widest select-none uppercase animate-pulse">
                 SYSTEM_LINK_ACTIVE
               </div>
             </div>
@@ -697,8 +799,8 @@ export default function App() {
               gatesOpen ? "scale-0 opacity-0 rotate-180" : "scale-100 opacity-100"
             }`}
           >
-            <div className="absolute inset-1 border border-dashed border-cyan-400 rounded-full animate-spin" />
-            <span className="text-[#00D4FF] font-mono font-black text-xl tracking-wider select-none animate-pulse">
+            <div className="absolute inset-1 border border-dashed border-[#C9B8F0]/50 rounded-full animate-spin" />
+            <span className="text-[#C9B8F0] font-mono font-black text-xl tracking-wider select-none animate-pulse">
               S-GATE
             </span>
           </div>
@@ -717,11 +819,11 @@ export default function App() {
 
       {/* Main framed Smartphone layout mock to simulate native mobile experience */}
       <div className="flex-1 flex justify-center items-stretch py-0 md:py-8 w-full z-10">
-        <div className="w-full max-w-md bg-[#0A0E1A] md:rounded-[40px] md:border-[10px] md:border-slate-800 shadow-[0_0_60px_rgba(123,47,190,0.15)] md:aspect-[9/19.5] flex flex-col relative overflow-hidden">
-          
+        <div className="w-full max-w-md bg-[#15101F] md:rounded-[40px] md:border-[10px] md:border-[#241B33] shadow-[0_0_60px_rgba(124,95,192,0.18)] md:aspect-[9/19.5] flex flex-col relative overflow-hidden">
+
           {/* Mock Speaker/Camera Phone notch */}
-          <div className="hidden md:flex justify-center absolute top-2 left-1/2 -translate-x-1/2 w-32 h-6 bg-slate-800 rounded-b-2xl z-50">
-            <div className="w-12 h-1 bg-slate-900 rounded mt-1" />
+          <div className="hidden md:flex justify-center absolute top-2 left-1/2 -translate-x-1/2 w-32 h-6 bg-[#241B33] rounded-b-2xl z-50">
+            <div className="w-12 h-1 bg-[#15101F] rounded mt-1" />
           </div>
 
           {!currentUser ? (
@@ -734,11 +836,11 @@ export default function App() {
           ) : (
             <>
               {/* Game HUD Bar header */}
-              <div className="px-5 pt-7 pb-4 bg-slate-950/90 border-b border-purple-550/20 flex justify-between items-center relative z-25">
+              <div className="px-5 safe-top pb-4 bg-[#15101F]/90 border-b border-white/10 flex justify-between items-center relative z-25">
                 <div className="flex items-center gap-2">
-                  <div className="w-1.5 h-6 bg-[#7B2FBE] rounded-full" />
-                  <span className="text-yellow-400 font-black font-sans uppercase tracking-widest text-sm">
-                    LevelFit
+                  <div className="w-1.5 h-6 bg-[#B9A3E3] rounded-full" />
+                  <span className="text-[#EDE6FA] font-monument tracking-[0.3em] text-base">
+                    LEVELFIT
                   </span>
                 </div>
 
@@ -751,9 +853,9 @@ export default function App() {
                       if (state) sfx.playClick();
                     }}
                     className={`p-1.5 rounded-full border transition-all cursor-pointer flex items-center justify-center ${
-                      sfxEnabled 
-                        ? "bg-purple-900/20 border-purple-500/35 text-purple-300 shadow-[0_0_8px_rgba(123,47,190,0.3)] hover:bg-purple-900/40"
-                        : "bg-slate-900 border-slate-800 text-gray-500 hover:text-gray-400"
+                      sfxEnabled
+                        ? "bg-[#3A2F58]/50 border-[#C9B8F0]/30 text-[#C9B8F0] hover:bg-[#3A2F58]/70"
+                        : "bg-[#15101F] border-white/10 text-[#9A8FB8] hover:text-[#C7BBE2]"
                     }`}
                     title={sfxEnabled ? "System audio: ON" : "System audio: LOCKED"}
                     style={{ minWidth: "32px", minHeight: "32px" }}
@@ -762,19 +864,19 @@ export default function App() {
                   </button>
 
                   {/* Streak */}
-                  <div className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-900 border border-slate-800 rounded-full text-xs text-amber-500 font-bold">
-                    <Flame className="w-4 h-4 text-amber-500 animate-bounce" /> {currentUser.streak}d
+                  <div className="flex items-center gap-1.5 px-2.5 py-1 frost rounded-full text-xs text-[#C9B8F0] font-medium">
+                    <Flame className="w-4 h-4 text-[#C9B8F0]" /> {currentUser.streak}d
                   </div>
 
                   {/* Level text */}
-                  <div className="px-2.5 py-1 bg-gradient-to-r from-purple-950 to-slate-900 border border-[#7B2FBE]/30 rounded-full text-xs text-yellow-300 font-bold">
+                  <div className="px-2.5 py-1 frost rounded-full text-xs text-[#EDE6FA] font-medium">
                     Lv. {currentUser.level}
                   </div>
                 </div>
               </div>
 
               {/* Central screen tab contents */}
-              <main className="flex-1 overflow-y-auto px-4 py-6 relative z-10 pb-20">
+              <main className="flex-1 overflow-y-auto px-4 py-6 relative z-10 pb-28">
                 {activeTab === "home" && (
                   <HomeOverview
                     currentUser={currentUser}
@@ -782,6 +884,35 @@ export default function App() {
                     quests={quests}
                     onNavigateToTab={(tab) => setActiveTab(tab)}
                   />
+                )}
+
+                {activeTab === "transformation" && (
+                  <TransformationView
+                    currentUser={currentUser}
+                    onReward={handleTransformationReward}
+                    onLockChange={setDisciplineLocked}
+                  />
+                )}
+
+                {/* Duolingo-style hard lock: blocks every other screen until today's ritual is done */}
+                {disciplineLocked && activeTab !== "transformation" && (
+                  <div className="absolute inset-0 z-40 bg-[#1B1528]/95 backdrop-blur-md flex flex-col items-center justify-center text-center px-8">
+                    <Lock className="w-10 h-10 text-[#C9B8F0] mb-5" />
+                    <p className="font-mono text-[10px] tracking-[0.4em] text-[#C9B8F0]/60 uppercase mb-2">Locked</p>
+                    <h3 className="text-2xl text-[#EDE6FA] font-semibold" style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}>
+                      ภารกิจวันนี้ยังไม่เสร็จ
+                    </h3>
+                    <p className="text-xs text-[#9A8FB8] mt-3 leading-relaxed max-w-xs">
+                      Discipline Lock เปิดอยู่ — ทำ "ออกกำลังกาย" ของวันนี้ให้เสร็จก่อน ถึงจะเข้าหน้าอื่นได้
+                    </p>
+                    <button
+                      onClick={() => changeTab("transformation")}
+                      className="mt-6 px-8 py-3.5 bg-[#B9A3E3] hover:bg-[#C7B5EC] text-[#241B3A] font-semibold rounded-full transition-colors cursor-pointer shadow-[0_8px_30px_rgba(185,163,227,0.3)]"
+                      style={{ minHeight: "52px" }}
+                    >
+                      ไปทำภารกิจวันนี้
+                    </button>
+                  </div>
                 )}
 
                 {activeTab === "workout" && (
@@ -793,13 +924,13 @@ export default function App() {
                 {activeTab === "character" && (
                   <div className="space-y-5">
                     {/* Character sub-tabs */}
-                    <div className="grid grid-cols-3 p-1 bg-slate-950/80 border border-slate-800 rounded-xl gap-1">
+                    <div className="grid grid-cols-3 p-1 frost rounded-xl gap-1">
                       <button
                         onClick={() => changeCharSubTab("status")}
                         className={`py-2 text-[10px] font-black font-mono uppercase tracking-wider rounded-lg transition-all cursor-pointer text-center ${
                           charSubTab === "status"
-                            ? "bg-purple-900/40 border border-purple-500/20 text-yellow-300 shadow"
-                            : "text-gray-500 hover:text-gray-300"
+                            ? "bg-[#3A2F58]/60 border border-[#C9B8F0]/30 text-[#C9B8F0]"
+                            : "text-[#9A8FB8] hover:text-[#C7BBE2]"
                         }`}
                         style={{ minHeight: "44px" }}
                       >
@@ -809,8 +940,8 @@ export default function App() {
                         onClick={() => changeCharSubTab("quests")}
                         className={`py-2 text-[10px] font-black font-mono uppercase tracking-wider rounded-lg transition-all cursor-pointer text-center ${
                           charSubTab === "quests"
-                            ? "bg-purple-900/40 border border-purple-500/20 text-yellow-300 shadow"
-                            : "text-gray-500 hover:text-gray-300"
+                            ? "bg-[#3A2F58]/60 border border-[#C9B8F0]/30 text-[#C9B8F0]"
+                            : "text-[#9A8FB8] hover:text-[#C7BBE2]"
                         }`}
                         style={{ minHeight: "44px" }}
                       >
@@ -820,8 +951,8 @@ export default function App() {
                         onClick={() => changeCharSubTab("achievements")}
                         className={`py-2 text-[10px] font-black font-mono uppercase tracking-wider rounded-lg transition-all cursor-pointer text-center ${
                           charSubTab === "achievements"
-                            ? "bg-purple-900/40 border border-purple-500/20 text-yellow-300 shadow"
-                            : "text-gray-500 hover:text-gray-300"
+                            ? "bg-[#3A2F58]/60 border border-[#C9B8F0]/30 text-[#C9B8F0]"
+                            : "text-[#9A8FB8] hover:text-[#C7BBE2]"
                         }`}
                         style={{ minHeight: "44px" }}
                       >
@@ -853,10 +984,6 @@ export default function App() {
                   </div>
                 )}
 
-                {activeTab === "leaderboard" && (
-                  <LeaderboardView currentUser={currentUser} />
-                )}
-
                 {activeTab === "profile" && (
                   <ProfileView
                     currentUser={currentUser}
@@ -875,11 +1002,11 @@ export default function App() {
               </main>
 
               {/* Persistent Bottom Mobile Navigation Rail */}
-              <nav className="absolute bottom-0 left-0 right-0 h-16 bg-slate-950/95 border-t border-purple-550/15 flex justify-around items-stretch z-30 pb-safe px-2">
+              <nav className="absolute bottom-0 left-0 right-0 min-h-16 bg-[#15101F]/95 border-t border-white/10 flex justify-around items-stretch z-30 safe-bottom px-2">
                 <button
                   onClick={() => changeTab("home")}
                   className={`flex flex-col items-center justify-center flex-1 cursor-pointer transition-colors ${
-                    activeTab === "home" ? "text-yellow-400" : "text-gray-500 hover:text-gray-300"
+                    activeTab === "home" ? "text-[#C9B8F0]" : "text-[#9A8FB8] hover:text-[#C7BBE2]"
                   }`}
                   style={{ minWidth: "44px", minHeight: "44px" }}
                 >
@@ -888,9 +1015,20 @@ export default function App() {
                 </button>
 
                 <button
+                  onClick={() => changeTab("transformation")}
+                  className={`flex flex-col items-center justify-center flex-1 cursor-pointer transition-colors ${
+                    activeTab === "transformation" ? "text-[#C9B8F0]" : "text-[#9A8FB8] hover:text-[#C7BBE2]"
+                  }`}
+                  style={{ minWidth: "44px", minHeight: "44px" }}
+                >
+                  <RuneScrollIcon className={`w-5 h-5 ${activeTab === "transformation" ? "scale-110" : ""}`} />
+                  <span className="text-[9px] font-bold tracking-widest uppercase font-mono mt-1">21-Day</span>
+                </button>
+
+                <button
                   onClick={() => changeTab("workout")}
                   className={`flex flex-col items-center justify-center flex-1 cursor-pointer transition-colors ${
-                    activeTab === "workout" ? "text-yellow-400" : "text-gray-500 hover:text-gray-300"
+                    activeTab === "workout" ? "text-[#C9B8F0]" : "text-[#9A8FB8] hover:text-[#C7BBE2]"
                   }`}
                   style={{ minWidth: "44px", minHeight: "44px" }}
                 >
@@ -901,7 +1039,7 @@ export default function App() {
                 <button
                   onClick={() => changeTab("character")}
                   className={`flex flex-col items-center justify-center flex-1 cursor-pointer transition-colors ${
-                    activeTab === "character" ? "text-yellow-400" : "text-gray-500 hover:text-gray-300"
+                    activeTab === "character" ? "text-[#C9B8F0]" : "text-[#9A8FB8] hover:text-[#C7BBE2]"
                   }`}
                   style={{ minWidth: "44px", minHeight: "44px" }}
                 >
@@ -910,20 +1048,9 @@ export default function App() {
                 </button>
 
                 <button
-                  onClick={() => changeTab("leaderboard")}
-                  className={`flex flex-col items-center justify-center flex-1 cursor-pointer transition-colors ${
-                    activeTab === "leaderboard" ? "text-yellow-400" : "text-gray-500 hover:text-gray-300"
-                  }`}
-                  style={{ minWidth: "44px", minHeight: "44px" }}
-                >
-                  <Trophy className={`w-5 h-5 ${activeTab === "leaderboard" ? "scale-110" : ""}`} />
-                  <span className="text-[9px] font-bold tracking-widest uppercase font-mono mt-1">Leader</span>
-                </button>
-
-                <button
                   onClick={() => changeTab("profile")}
                   className={`flex flex-col items-center justify-center flex-1 cursor-pointer transition-colors ${
-                    activeTab === "profile" ? "text-yellow-400" : "text-gray-500 hover:text-gray-300"
+                    activeTab === "profile" ? "text-[#C9B8F0]" : "text-[#9A8FB8] hover:text-[#C7BBE2]"
                   }`}
                   style={{ minWidth: "44px", minHeight: "44px" }}
                 >
@@ -972,6 +1099,18 @@ function HelmetIcon(props: React.SVGProps<SVGSVGElement>) {
       <path d="M5 11h14" strokeWidth="2" />
       <path d="M9 11v5" />
       <path d="M15 11v5" />
+    </svg>
+  );
+}
+
+function RuneScrollIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <rect x="4" y="3" width="16" height="18" rx="2" />
+      <path d="M8 8h8" />
+      <path d="M8 12h8" />
+      <path d="M8 16h5" />
+      <circle cx="17.5" cy="16.5" r="0.8" fill="currentColor" stroke="none" />
     </svg>
   );
 }

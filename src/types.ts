@@ -74,3 +74,19 @@ export interface NotificationSetting {
   time: string; // "HH:MM"
   enabled: boolean;
 }
+
+// 21-Day Transformation tracking
+export interface TransformationDayDone {
+  workout: boolean;
+  nutrition: boolean;
+  skincare: boolean;
+}
+
+export interface TransformationState {
+  startDate: string | null; // "YYYY-MM-DD" when the protocol was initiated
+  completions: { [day: number]: TransformationDayDone };
+  beforePhoto?: string | null; // downscaled data URL (Day 0 mirror shot)
+  afterPhoto?: string | null; // downscaled data URL (Day 21 reveal)
+  disciplineLock?: boolean; // Duolingo-style hard lock until today's ritual is done
+  finalClaimed?: boolean; // Day-21 final boss reward claimed
+}

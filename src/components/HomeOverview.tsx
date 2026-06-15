@@ -1,31 +1,33 @@
 import React, { useState, useEffect } from "react";
-import { UserProfile, WorkoutLog, Quest } from "../types";
-import { 
-  Dumbbell, 
-  Flame, 
-  Award, 
-  Star, 
-  History, 
-  Sparkles, 
-  Clock, 
-  Sword, 
-  ShieldAlert, 
-  Activity, 
+import { UserProfile, WorkoutLog, Quest, TransformationState } from "../types";
+import {
+  Dumbbell,
+  Flame,
+  Award,
+  Star,
+  History,
+  Sparkles,
+  Clock,
+  Sword,
+  ShieldAlert,
+  Activity,
   Zap,
   CheckCircle,
   TrendingUp,
   Skull,
-  Terminal
+  Terminal,
+  ChevronRight
 } from "lucide-react";
 import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import { getHunterRank, RANK_METADATA } from "../utils/rankUtils";
+import { getDayPlan, TOTAL_DAYS } from "../data/transformationProgram";
 
 interface HomeOverviewProps {
   currentUser: UserProfile;
   workoutHistory: WorkoutLog[];
   quests: Quest[];
-  onNavigateToTab: (tab: "workout" | "character" | "leaderboard" | "profile") => void;
+  onNavigateToTab: (tab: "transformation" | "workout" | "character" | "profile") => void;
 }
 
 interface GuildBoss {
@@ -52,6 +54,30 @@ export function HomeOverview({ currentUser, workoutHistory, quests, onNavigateTo
 
   const hunterRank = getHunterRank(currentUser.level);
   const rankStyle = RANK_METADATA[hunterRank];
+
+  // 21-Day Transformation summary (read-only snapshot for the Home card)
+  const [tf, setTf] = useState<TransformationState | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    const loadTf = async () => {
+      try {
+        if (currentUser.uid.startsWith("guest_")) {
+          const raw = localStorage.getItem(`transformation_${currentUser.uid}`);
+          if (!cancelled) setTf(raw ? JSON.parse(raw) : null);
+        } else {
+          const ref = doc(db, `users/${currentUser.uid}/soloLeveling`, "transformation");
+          const snap = await getDoc(ref);
+          if (!cancelled) setTf(snap.exists() ? (snap.data() as TransformationState) : null);
+        }
+      } catch (e) {
+        if (!cancelled) setTf(null);
+      }
+    };
+    loadTf();
+    return () => {
+      cancelled = true;
+    };
+  }, [currentUser.uid]);
 
   // Guild Boss State
   const [boss, setBoss] = useState<GuildBoss>({
@@ -286,183 +312,248 @@ export function HomeOverview({ currentUser, workoutHistory, quests, onNavigateTo
   return (
     <div className="space-y-6">
       
-      {/* SYSTEM HEADER with blinking cursor */}
-      <div className="flex items-center justify-between border-b border-[#00D4FF]/30 pb-3 font-mono">
+      {/* SYSTEM HEADER */}
+      <div className="flex items-center justify-between border-b border-white/10 pb-3">
         <div className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-[#00D4FF] animate-ping" />
-          <h2 className="text-xs font-black text-[#00D4FF] tracking-widest uppercase flex items-center">
-            ACTIVE SYSTEM INTERFACE<span className="animate-[blink_1.1s_steps(2,start)_infinite] ml-1 bg-[#00D4FF] text-transparent select-none inline-block w-1.5 h-3.5 align-middle">|</span>
+          <div className="w-2 h-2 rounded-full bg-[#C9B8F0]" />
+          <h2 className="font-monument tracking-[0.3em] uppercase text-[#C9B8F0]/60 text-xs flex items-center">
+            ACTIVE SYSTEM INTERFACE
           </h2>
         </div>
-        <span className="text-[9px] text-[#7B2FBE] font-bold tracking-widest uppercase bg-purple-950/40 px-2 py-0.5 border border-[#7B2FBE]/20 rounded h-5 flex items-center">
+        <span className="font-monument tracking-[0.3em] uppercase text-[#C9B8F0]/60 text-[9px] px-2 py-0.5 border border-white/10 rounded h-5 flex items-center">
           HUNTER_LINK: ONLINE
         </span>
       </div>
 
       {/* level character gauge block */}
-      <div className={`p-6 bg-gradient-to-r ${rankStyle.skinClass} border-2 ${rankStyle.borderColor} rounded-2xl relative shadow-2xl overflow-hidden transition-all duration-300`}>
-        <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-600/10 rounded-full blur-2xl pointer-events-none" />
+      <div className={`p-6 bg-gradient-to-r ${rankStyle.skinClass} border-2 ${rankStyle.borderColor} rounded-2xl relative shadow-[0_8px_30px_rgba(0,0,0,0.4)] overflow-hidden transition-all duration-300`}>
+        <div className="absolute top-0 right-0 w-32 h-32 bg-[#C9B8F0]/10 rounded-full blur-2xl pointer-events-none" />
 
-        <div className="flex justify-between items-center mb-1 font-sans">
+        <div className="flex justify-between items-center mb-1">
           <div>
             <div className="flex justify-between items-center mr-1">
-              <span className="text-gray-400 text-[10px] font-mono uppercase tracking-widest block">Monarch Rank HUD</span>
-              <button 
+              <span className="font-monument tracking-[0.3em] uppercase text-[#C9B8F0]/60 text-[10px] block">Monarch Rank HUD</span>
+              <button
                 onClick={() => setShowSystemWindow(true)}
-                className="px-2 py-0.5 text-[9px] bg-[#002B42]/75 hover:bg-[#003B5C] text-[#00D4FF] border border-[#00D4FF]/35 rounded font-mono font-bold flex items-center gap-1 cursor-pointer transition-colors"
+                className="px-2 py-0.5 text-[9px] frost text-[#C9B8F0] rounded-full flex items-center gap-1 cursor-pointer transition-colors"
                 style={{ minHeight: "24px" }}
               >
                 <Terminal className="w-3 h-3" /> SYSTEM INTERFACE
               </button>
             </div>
-            <h3 className="text-2xl font-black text-white">{currentUser.displayName}</h3>
+            <h3 className="text-2xl font-display font-semibold text-[#EDE6FA]">{currentUser.displayName}</h3>
           </div>
-          <div className="text-right font-mono">
-            <span className="text-[#00C8FF] text-2xl font-black block">Level {currentUser.level}</span>
-            <span className="text-[10px] uppercase text-purple-400 font-bold block">{currentUser.characterClass}</span>
+          <div className="text-right">
+            <span className="text-[#C9B8F0] text-2xl font-display font-semibold block">Level {currentUser.level}</span>
+            <span className="text-[10px] uppercase text-[#9A8FB8] font-bold block">{currentUser.characterClass}</span>
           </div>
         </div>
 
         {/* XP Gauge Bar */}
-        <div className="mt-5 space-y-1.5 font-mono">
+        <div className="mt-5 space-y-1.5">
           <div className="flex justify-between text-xs font-bold">
-            <span className="text-[#00C8FF] flex items-center gap-1">
+            <span className="text-[#C9B8F0] flex items-center gap-1">
               <Zap className="w-3.5 h-3.5" /> Experience Progress
             </span>
-            <span className="text-yellow-400 font-black">
+            <span className="text-[#C9B8F0] font-semibold">
               {currentUser.xp} / {nextLevelXpLimit} XP
             </span>
           </div>
 
-          <div className="h-3 w-full bg-slate-950 rounded-full border border-purple-500/20 overflow-hidden relative shadow-inner">
+          <div className="h-3 w-full bg-[#15101F] rounded-full border border-white/10 overflow-hidden relative">
             <div
-              className="h-full bg-gradient-to-r from-purple-800 via-[#00C8FF] to-yellow-500 rounded-full transition-all duration-500 relative"
+              className="h-full bg-gradient-to-r from-[#7C5FC0] to-[#C9B8F0] rounded-full transition-all duration-500 relative"
               style={{ width: `${progressPercentage}%` }}
-            >
-              <div className="absolute inset-0 bg-white/15 animate-pulse" />
-            </div>
+            />
           </div>
-          <p className="text-[9px] text-gray-500 text-right">
+          <p className="text-[9px] text-[#9A8FB8] text-right">
             CURRENT HUNTER: {hunterRank}-RANK SPECIALTY
           </p>
         </div>
       </div>
 
+      {/* 21-DAY TRANSFORMATION SUMMARY */}
+      {(() => {
+        if (!tf?.startDate) {
+          return (
+            <button
+              onClick={() => onNavigateToTab("transformation")}
+              className="w-full text-left p-5 frost rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.4)] flex items-center gap-4 cursor-pointer hover:bg-white/[0.06] transition-colors"
+            >
+              <div className="w-10 h-10 rounded-full border border-[#C9B8F0]/40 bg-[#1E1730] flex items-center justify-center shrink-0">
+                <Sparkles className="w-5 h-5 text-[#C9B8F0]" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-monument text-[10px] tracking-[0.35em] text-[#C9B8F0]/60 uppercase">Awaken</p>
+                <p className="font-display text-lg text-[#EDE6FA]">เริ่มโปรแกรม 21 วัน</p>
+              </div>
+              <ChevronRight className="w-5 h-5 text-[#9A8FB8] shrink-0" />
+            </button>
+          );
+        }
+        const startMs = new Date(tf.startDate + "T00:00:00").getTime();
+        const todayMs = new Date(new Date().toISOString().split("T")[0] + "T00:00:00").getTime();
+        const raw = Math.floor((todayMs - startMs) / 86400000) + 1;
+        const currentDay = Math.min(Math.max(raw, 1), TOTAL_DAYS);
+        const over = raw > TOTAL_DAYS;
+        const comps = tf.completions || {};
+        const passed = Object.keys(comps).filter((k) => comps[Number(k)]?.workout).length;
+        const pct = Math.round((passed / TOTAL_DAYS) * 100);
+        const today = comps[currentDay] || { workout: false, nutrition: false, skincare: false };
+        const pillars = [
+          { label: "ออกกำลัง", done: today.workout },
+          { label: "อาหาร", done: today.nutrition },
+          { label: "สกินแคร์", done: today.skincare },
+        ];
+        return (
+          <button
+            onClick={() => onNavigateToTab("transformation")}
+            className="w-full text-left p-5 frost rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.4)] cursor-pointer hover:bg-white/[0.06] transition-colors"
+          >
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <p className="font-monument text-[10px] tracking-[0.35em] text-[#C9B8F0]/60 uppercase">
+                  Awaken · 21-Day
+                </p>
+                <p className="font-display text-lg text-[#EDE6FA]">
+                  {over ? "ครบ 21 วันแล้ว" : `Day ${currentDay} / 21`}
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="font-display text-2xl text-[#C9B8F0]">{pct}%</span>
+                <ChevronRight className="w-5 h-5 text-[#9A8FB8]" />
+              </div>
+            </div>
+            <div className="h-2 w-full bg-[#15101F] rounded-full overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-[#7C5FC0] to-[#C9B8F0] rounded-full transition-all"
+                style={{ width: `${pct}%` }}
+              />
+            </div>
+            {!over && (
+              <div className="mt-3 flex gap-2">
+                {pillars.map((p) => (
+                  <span
+                    key={p.label}
+                    className={`flex-1 flex items-center justify-center gap-1 py-1 rounded-lg text-[10px] border ${
+                      p.done
+                        ? "bg-[#3A2F58]/60 border-[#C9B8F0]/40 text-[#C9B8F0]"
+                        : "bg-[#15101F] border-white/10 text-[#9A8FB8]"
+                    }`}
+                  >
+                    {p.done ? <CheckCircle className="w-3 h-3" /> : <span className="w-3 h-3 rounded-full border border-current inline-block" />}
+                    {p.label}
+                  </span>
+                ))}
+              </div>
+            )}
+          </button>
+        );
+      })()}
+
       {/* GUILD RAID BOSS STATUS WIDGET */}
-      <div className="p-5 bg-gradient-to-br from-[#12040D] to-[#0A0D1A] border-2 border-red-500/30 rounded-2xl relative shadow-2xl overflow-hidden">
-        <div className="absolute top-0 right-0 w-32 h-32 bg-red-600/5 rounded-full blur-3xl pointer-events-none" />
-        
+      <div className="p-5 frost rounded-2xl relative shadow-[0_8px_30px_rgba(0,0,0,0.4)] overflow-hidden">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-rose-500/5 rounded-full blur-3xl pointer-events-none" />
+
         <div className="flex justify-between items-start mb-2">
           <div>
-            <span className="text-red-500 text-[9px] font-mono uppercase tracking-widest block font-black">
+            <span className="font-monument tracking-[0.3em] uppercase text-rose-300/80 text-[9px] block">
               WEEKLY GUILD RAID EVENT
             </span>
-            <h4 className="text-sm font-black text-white uppercase tracking-tight font-sans">
+            <h4 className="text-sm font-display font-semibold text-[#EDE6FA] tracking-tight">
               {boss.name}
             </h4>
           </div>
-          <div className="text-right font-mono">
-            <span className="text-red-400 font-extrabold text-xs block">LEVEL {boss.level}</span>
+          <div className="text-right">
+            <span className="text-rose-300/80 font-semibold text-xs block">LEVEL {boss.level}</span>
           </div>
         </div>
 
         {/* Boss HP Bar */}
         <div className="space-y-1 mt-3">
-          <div className="flex justify-between text-[11px] font-mono font-bold">
-            <span className="text-red-300">HP Gauge ({Math.floor((boss.hp / boss.maxHp) * 100)}%)</span>
-            <span className="text-red-400 font-black">{boss.hp.toLocaleString()} / {boss.maxHp.toLocaleString()} HP</span>
+          <div className="flex justify-between text-[11px] font-bold">
+            <span className="text-rose-300/80">HP Gauge ({Math.floor((boss.hp / boss.maxHp) * 100)}%)</span>
+            <span className="text-rose-300/80 font-semibold">{boss.hp.toLocaleString()} / {boss.maxHp.toLocaleString()} HP</span>
           </div>
-          <div className="h-4 w-full bg-slate-950 border border-red-950 rounded-lg overflow-hidden relative">
-            <div 
-              className={`h-full bg-gradient-to-r from-red-800 to-rose-500 transition-all duration-300 ${strikeVibrate ? "scale-y-110 brightness-125" : ""}`}
+          <div className="h-4 w-full bg-[#15101F] border border-white/10 rounded-lg overflow-hidden relative">
+            <div
+              className={`h-full bg-gradient-to-r from-rose-800 to-rose-500 transition-all duration-300 ${strikeVibrate ? "scale-y-110 brightness-125" : ""}`}
               style={{ width: `${(boss.hp / boss.maxHp) * 100}%` }}
             />
-            <div className="absolute inset-0 bg-white/5 pointer-events-none" />
           </div>
         </div>
 
         {lastStrikeLog && (
-          <div className="mt-3 p-2 bg-red-950/45 border border-red-900/40 rounded-lg text-red-300 text-[10px] font-mono text-center animate-slideUp">
+          <div className="mt-3 p-2 frost border border-rose-500/30 rounded-lg text-rose-300/80 text-[10px] text-center animate-slideUp">
             {lastStrikeLog}
           </div>
         )}
 
         <div className="mt-4 flex gap-2">
-          <button 
+          <button
             onClick={handleStrikeBoss}
             disabled={boss.hp <= 0}
-            className={`flex-1 py-2 bg-gradient-to-r from-red-900 to-rose-600 hover:from-red-800 hover:to-rose-500 text-white font-black uppercase text-xs tracking-wider rounded-xl transition-transform active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer ${strikeVibrate ? "scale-[1.03] shadow-[0_0_15px_#f43f5e]" : ""}`}
+            className="flex-1 py-2 bg-[#B9A3E3] hover:bg-[#C7B5EC] text-[#241B3A] font-semibold uppercase text-xs tracking-wider rounded-full transition-transform active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer"
             style={{ minHeight: "44px" }}
           >
             <Sword className="w-4 h-4" /> Strike Boss
-          </button>
-          
-          <button
-            onClick={() => onNavigateToTab("leaderboard")}
-            className="px-3.5 bg-slate-950 border border-slate-800 rounded-xl hover:border-red-500/30 text-gray-400 hover:text-white transition-colors cursor-pointer"
-            style={{ minWidth: "44px", minHeight: "44px" }}
-          >
-            Guild Leaders
           </button>
         </div>
       </div>
 
       {/* TIME-LIMITED DUNGEON GATE WARNING */}
       {gate.active && (
-        <div className="p-5 bg-gradient-to-br from-[#0F0C02] via-[#041E26] to-[#0A0D1A] border-2 border-cyan-400/30 rounded-2xl relative shadow-2xl">
-          <div className="absolute -top-1 right-3 px-2 py-0.5 bg-cyan-500 text-slate-950 text-[9px] font-mono font-extrabold uppercase rounded shadow-lg animate-pulse">
+        <div className="p-5 frost rounded-2xl relative shadow-[0_8px_30px_rgba(0,0,0,0.4)]">
+          <div className="absolute -top-1 right-3 px-2 py-0.5 bg-[#B9A3E3] text-[#241B3A] text-[9px] font-monument tracking-[0.2em] uppercase rounded">
             ALERT: EMERGENCY DUNGEON
           </div>
 
           <div className="flex justify-between items-center mb-1 col-span-2">
-            <span className="text-[#00D4FF] text-xs font-mono font-black uppercase tracking-wider">
+            <span className="text-[#C9B8F0] text-xs font-display font-semibold tracking-wider">
               {gate.title}
             </span>
-            <div className="flex items-center gap-1.5 font-mono text-xs text-yellow-500 font-extrabold bg-[#2B2302] border border-yellow-500/20 px-2 py-0.5 rounded-full">
-              <Clock className="w-3.5 h-3.5 animate-spin" /> {formatTimer(gate.secondsLeft)}
+            <div className="flex items-center gap-1.5 text-xs text-[#C9B8F0] font-semibold frost px-2 py-0.5 rounded-full">
+              <Clock className="w-3.5 h-3.5" /> {formatTimer(gate.secondsLeft)}
             </div>
           </div>
 
-          <p className="text-[11px] text-gray-400 font-sans leading-relaxed mt-2.5">
-            Clear goal: Log {gate.goalMinutes} minutes of <span className="text-[#00D4FF] font-bold uppercase">{gate.goalCategory}</span> to clear this Dungeon Gate before it closes!
+          <p className="text-[11px] text-[#9A8FB8] leading-relaxed mt-2.5">
+            Clear goal: Log {gate.goalMinutes} minutes of <span className="text-[#C9B8F0] font-bold uppercase">{gate.goalCategory}</span> to clear this Dungeon Gate before it closes!
           </p>
 
-          {/* Majestic Animated Dungeon Gate Portal (rotating rings, purple energy core) */}
+          {/* Majestic Animated Dungeon Gate Portal (rotating rings, lavender energy core) */}
           <div className="relative w-28 h-28 mx-auto flex items-center justify-center my-4">
             {/* Swirling energy background blur sphere */}
-            <div className="absolute inset-0 rounded-full bg-purple-600/25 blur-xl animate-pulse pointer-events-none" />
-            
-            {/* Rotating Purple Dungeon Portal outer ring */}
-            <div className="absolute w-24 h-24 border-4 border-dashed border-purple-500/60 rounded-full animate-[spin_12s_linear_infinite] pointer-events-none" />
-            
-            {/* Counter-rotating Cyan Portal inner ring */}
-            <div className="absolute w-19 h-19 border-2 border-cyan-400/50 border-t-purple-650 border-b-cyan-500 rounded-full animate-[spin_8s_linear_infinite_reverse] pointer-events-none" />
-            
-            {/* Glowing Purple Core Sphere with a skull and pulses */}
-            <div className="absolute w-12 h-12 bg-gradient-to-r from-[#120526] via-[#7B2FBE] to-[#0A0D18] rounded-full flex items-center justify-center border border-purple-400/40 shadow-[0_0_20px_#7B2FBE] animate-pulse">
-              <Skull className="w-5 h-5 text-cyan-300 animate-pulse" strokeWidth={1.5} />
+            <div className="absolute inset-0 rounded-full bg-[#7C5FC0]/20 blur-xl pointer-events-none" />
+
+            {/* Rotating outer ring */}
+            <div className="absolute w-24 h-24 border-4 border-dashed border-[#C9B8F0]/30 rounded-full animate-[spin_12s_linear_infinite] pointer-events-none" />
+
+            {/* Counter-rotating inner ring */}
+            <div className="absolute w-19 h-19 border-2 border-[#C9B8F0]/30 rounded-full animate-[spin_8s_linear_infinite_reverse] pointer-events-none" />
+
+            {/* Lavender Core Sphere with a skull */}
+            <div className="absolute w-12 h-12 bg-gradient-to-r from-[#241B3A] via-[#7C5FC0] to-[#15101F] rounded-full flex items-center justify-center border border-[#C9B8F0]/30">
+              <Skull className="w-5 h-5 text-[#C9B8F0]" strokeWidth={1.5} />
             </div>
-            
-            {/* Cyber runic overlay details */}
-            <div className="absolute inset-3 border border-cyan-400/10 rounded-full pointer-events-none animate-ping opacity-10" />
           </div>
 
-          <div className="mt-4 flex justify-between items-center bg-[#07131D] border border-[#00D4FF]/15 p-2 rounded-xl text-[10px] font-mono">
-            <span className="text-gray-400">EXP Reward: <b className="text-[#00C8FF]">+400 XP</b></span>
-            <span className="text-gray-400">Loot: <b className="text-yellow-400">Exclusive Shadow Soldier</b></span>
+          <div className="mt-4 flex justify-between items-center frost p-2 rounded-xl text-[10px]">
+            <span className="text-[#9A8FB8]">EXP Reward: <b className="text-[#C9B8F0]">+400 XP</b></span>
+            <span className="text-[#9A8FB8]">Loot: <b className="text-[#C9B8F0]">Exclusive Shadow Soldier</b></span>
           </div>
 
           <div className="mt-4 grid grid-cols-2 gap-2">
             <button
               onClick={() => onNavigateToTab("workout")}
-              className="py-2 bg-[#003B5C]/50 hover:bg-[#003B5C]/80 text-[#00C8FF] font-black border border-[#00C8FF]/30 text-xs tracking-wider uppercase rounded-xl transition-all cursor-pointer"
+              className="py-2 bg-[#B9A3E3] hover:bg-[#C7B5EC] text-[#241B3A] font-semibold text-xs tracking-wider uppercase rounded-full transition-all cursor-pointer"
               style={{ minHeight: "44px" }}
             >
               Enter Gate
             </button>
             <button
               onClick={handleScanForGates}
-              className="py-2 bg-slate-950 hover:bg-slate-900 text-gray-400 font-black border border-slate-800 text-xs tracking-wider uppercase rounded-xl transition-all cursor-pointer"
+              className="py-2 frost text-[#C7BBE2] font-semibold text-xs tracking-wider uppercase rounded-full transition-all cursor-pointer"
               style={{ minHeight: "44px" }}
             >
               Scan for Gates
@@ -473,37 +564,16 @@ export function HomeOverview({ currentUser, workoutHistory, quests, onNavigateTo
 
       {/* Main double column */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Dynamic Daily quest box styled exactly like Solo Leveling's blue hologram window */}
-        <div className="relative p-[1.5px] shadow-[0_0_20px_rgba(6,182,212,0.15)] bg-slate-950"
-             style={{
-               clipPath: "polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px)",
-               background: "linear-gradient(135deg, rgba(0, 212, 255, 0.45) 0%, rgba(123, 47, 190, 0.25) 100%)"
-             }}>
-          {/* Cyber Scanline animation bar for hologram */}
-          <div 
-            className="absolute inset-x-0 h-0.5 bg-[#00D4FF] opacity-35 pointer-events-none shadow-[0_0_10px_#00D4FF]"
-            style={{
-              animation: "scanLine 4s linear infinite",
-            }}
-          />
-
-          <div className="p-5 bg-[#070e1b] flex flex-col justify-between h-full relative"
-               style={{
-                 clipPath: "polygon(13px 0, 100% 0, 100% calc(100% - 13px), calc(100% - 13px) 100%, 0 100%, 0 13px)"
-               }}>
+        {/* Dynamic Daily quest box */}
+        <div className="frost rounded-2xl relative shadow-[0_8px_30px_rgba(0,0,0,0.4)]">
+          <div className="p-5 flex flex-col justify-between h-full relative">
             <div>
-              {/* Tech Corner Details */}
-              <div className="absolute top-1 left-4 w-2 h-2 border-t border-l border-[#00D4FF]/40" />
-              <div className="absolute top-1 right-2 w-2 h-2 border-t border-r border-[#00D4FF]/40" />
-              <div className="absolute bottom-2 left-2 w-2 h-2 border-b border-l border-[#00D4FF]/40" />
-              <div className="absolute bottom-2 right-4 w-2 h-2 border-b border-r border-[#00D4FF]/40" />
-
-              <h4 className="text-xs font-black text-[#00D4FF] font-mono uppercase tracking-widest flex items-center gap-2 mb-4">
-                <Star className="w-3.5 h-3.5 animate-spin text-[#00D4FF]" /> DAILY SYSTEM TRIALS
+              <h4 className="text-xs font-display font-semibold text-[#C9B8F0] tracking-wider flex items-center gap-2 mb-4">
+                <Star className="w-3.5 h-3.5 text-[#C9B8F0]" /> DAILY SYSTEM TRIALS
               </h4>
 
               {activeQuests.length === 0 ? (
-                <div className="text-center py-6 text-gray-400 font-mono text-xs">
+                <div className="text-center py-6 text-[#9A8FB8] text-xs">
                   All trials cleared. Check the next gate sector!
                 </div>
               ) : (
@@ -511,22 +581,20 @@ export function HomeOverview({ currentUser, workoutHistory, quests, onNavigateTo
                   {activeQuests.map((q) => {
                     const currentPct = Math.min((q.currentValue / q.targetValue) * 100, 100);
                     return (
-                      <div key={q.id} className="space-y-1.5 font-mono">
+                      <div key={q.id} className="space-y-1.5">
                         <div className="flex justify-between items-center text-xs">
-                          <span className="font-extrabold text-[#00C8FF] text-[11px] font-sans truncate max-w-[150px]">
+                          <span className="font-semibold text-[#C9B8F0] text-[11px] truncate max-w-[150px]">
                             {q.title}
                           </span>
-                          <span className="font-mono text-cyan-400/80 text-[10px] font-black">
+                          <span className="text-[#9A8FB8] text-[10px] font-semibold">
                             {q.currentValue}/{q.targetValue}
                           </span>
                         </div>
-                        <div className="h-2 w-full bg-slate-950 rounded-none border border-cyan-500/25 overflow-hidden">
+                        <div className="h-2 w-full bg-[#15101F] rounded-full border border-white/10 overflow-hidden">
                           <div
-                            className="h-full bg-gradient-to-r from-[#005B82] to-[#00D4FF] transition-all duration-300 relative"
+                            className="h-full bg-gradient-to-r from-[#7C5FC0] to-[#C9B8F0] transition-all duration-300 relative"
                             style={{ width: `${currentPct}%` }}
-                          >
-                            <div className="absolute inset-0 bg-white/10 animate-pulse" />
-                          </div>
+                          />
                         </div>
                       </div>
                     );
@@ -537,7 +605,7 @@ export function HomeOverview({ currentUser, workoutHistory, quests, onNavigateTo
 
             <button
               onClick={() => onNavigateToTab("character")}
-              className="w-full mt-6 py-2 bg-[#022136] hover:bg-[#003B5C] text-[#00D4FF] font-black uppercase text-[10px] tracking-wider border border-[#00D4FF]/30 hover:border-[#00D4FF] transition-colors cursor-pointer rounded-none"
+              className="w-full mt-6 py-2 frost text-[#C7BBE2] font-semibold uppercase text-[10px] tracking-wider transition-colors cursor-pointer rounded-full"
               style={{ minHeight: "38px" }}
             >
               System Quests Terminal
@@ -546,21 +614,21 @@ export function HomeOverview({ currentUser, workoutHistory, quests, onNavigateTo
         </div>
 
         {/* Campfire Streaks quick dashboard with burning spirit fire SVG */}
-        <div className="p-5 bg-slate-900 border border-slate-800 rounded-2xl flex flex-col justify-between shadow-lg relative">
+        <div className="p-5 frost rounded-2xl flex flex-col justify-between shadow-[0_8px_30px_rgba(0,0,0,0.4)] relative">
           <div>
-            <h4 className="text-sm font-black text-amber-500 font-mono uppercase tracking-widest flex items-center gap-1.5 mb-4">
-              <Flame className="w-4 h-4 text-amber-500 animate-bounce" /> SYSTEM HEURISTIC FIRE STREAK
+            <h4 className="text-sm font-display font-semibold text-[#C9B8F0] tracking-wider flex items-center gap-1.5 mb-4">
+              <Flame className="w-4 h-4 text-[#C9B8F0]" /> SYSTEM HEURISTIC FIRE STREAK
             </h4>
 
             <div className="flex items-center gap-4 py-2">
-              <div className="text-4xl font-black font-mono text-white tracking-tight flex items-baseline gap-1">
+              <div className="text-4xl font-display font-semibold text-[#EDE6FA] tracking-tight flex items-baseline gap-1">
                 {currentUser.streak}
-                <span className="text-xs uppercase text-gray-500 font-bold block">Days Hot</span>
+                <span className="text-xs uppercase text-[#9A8FB8] font-bold block">Days Hot</span>
               </div>
 
               {/* Curated animated Spirit Fire SVG representation */}
               <div className="ml-auto">
-                <svg viewBox="0 0 100 100" className="w-16 h-16 pointer-events-none drop-shadow-[0_0_15px_rgba(249,115,22,0.65)] filter">
+                <svg viewBox="0 0 100 100" className="w-16 h-16 pointer-events-none drop-shadow-[0_0_10px_rgba(201,184,240,0.4)] filter">
                   <defs>
                     <linearGradient id="fireGrad" x1="0%" y1="100%" x2="0%" y2="0%">
                       <stop offset="0%" stopColor="#EA580C" />
@@ -608,14 +676,14 @@ export function HomeOverview({ currentUser, workoutHistory, quests, onNavigateTo
                 </svg>
               </div>
             </div>
-            <p className="text-gray-400 text-xs mt-1.5 font-mono leading-relaxed">
+            <p className="text-[#9A8FB8] text-xs mt-1.5 leading-relaxed">
               Keep the system link active. Skipping a day triggers punishment system logs!
             </p>
           </div>
 
           <button
             onClick={() => onNavigateToTab("workout")}
-            className="w-full mt-6 py-2.5 bg-gradient-to-r from-purple-950 to-slate-900 text-yellow-400 font-black uppercase border border-purple-500/20 text-xs tracking-wider rounded-xl hover:scale-[1.01] transition-transform cursor-pointer"
+            className="w-full mt-6 py-2.5 bg-[#B9A3E3] hover:bg-[#C7B5EC] text-[#241B3A] font-semibold uppercase text-xs tracking-wider rounded-full transition-transform cursor-pointer"
             style={{ minHeight: "44px" }}
           >
             Start Training Ritual
@@ -624,22 +692,22 @@ export function HomeOverview({ currentUser, workoutHistory, quests, onNavigateTo
       </div>
 
       {/* Recent history log feed */}
-      <div className="p-5 bg-slate-900/90 border border-slate-800 rounded-2xl shadow-lg">
-        <h4 className="text-sm font-black text-gray-300 font-mono uppercase tracking-widest flex items-center gap-2 mb-4">
-          <History className="w-4 h-4 text-[#00C8FF]" /> System Logged Clearances
+      <div className="p-5 frost rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.4)]">
+        <h4 className="text-sm font-display font-semibold text-[#C7BBE2] uppercase tracking-widest flex items-center gap-2 mb-4">
+          <History className="w-4 h-4 text-[#C9B8F0]" /> System Logged Clearances
         </h4>
 
         {recentWorkouts.length === 0 ? (
-          <div className="text-center py-10 border border-dashed border-slate-800 rounded-xl bg-slate-950/40 text-gray-500 font-mono text-xs">
+          <div className="text-center py-10 border border-dashed border-white/10 rounded-xl bg-[#15101F] text-[#9A8FB8] text-xs">
             No logged rituals logged yet. Begin your ritual to record points.
           </div>
         ) : (
-          <div className="space-y-3.5 divide-y divide-slate-800 overflow-hidden">
+          <div className="space-y-3.5 divide-y divide-white/10 overflow-hidden">
             {recentWorkouts.map((workout, idx) => (
               <div key={workout.id} className={`flex justify-between items-center py-2.5 ${idx !== 0 ? "pt-3.5" : ""}`}>
-                <div className="text-left font-sans">
-                  <span className="text-sm font-extrabold text-[#00C8FF] block">{workout.exerciseName}</span>
-                  <div className="flex items-center gap-2 text-[10px] text-gray-400 font-mono mt-0.5 uppercase">
+                <div className="text-left">
+                  <span className="text-sm font-semibold text-[#C9B8F0] block">{workout.exerciseName}</span>
+                  <div className="flex items-center gap-2 text-[10px] text-[#9A8FB8] mt-0.5 uppercase">
                     <span>{workout.category}</span>
                     <span>•</span>
                     <span>Intensity {workout.intensity}/5</span>
@@ -648,9 +716,9 @@ export function HomeOverview({ currentUser, workoutHistory, quests, onNavigateTo
                   </div>
                 </div>
 
-                <div className="text-right font-mono self-center">
-                  <span className="text-[#00C8FF] font-black text-xs block">+{workout.xpGained} XP</span>
-                  <span className="text-[9px] text-gray-500 block font-bold">
+                <div className="text-right self-center">
+                  <span className="text-[#C9B8F0] font-semibold text-xs block">+{workout.xpGained} XP</span>
+                  <span className="text-[9px] text-[#9A8FB8] block font-bold">
                     {new Date(workout.loggedAt).toLocaleDateString([], { month: "short", day: "numeric" })}
                   </span>
                 </div>
@@ -661,57 +729,49 @@ export function HomeOverview({ currentUser, workoutHistory, quests, onNavigateTo
       </div>
 
       {showSystemWindow && (
-        <div className="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center p-4">
-          {/* Holographic Glowing Card Container with Cyber Hex bordering pattern */}
-          <div className="relative w-full max-w-sm bg-[#091124] border-2 border-[#00D4FF]/45 rounded-2xl p-6 shadow-[0_0_35px_rgba(0,212,255,0.30)] overflow-hidden">
-            
-            {/* Cyber Scanline Laser animation bar */}
-            <div 
-              className="absolute inset-x-0 h-0.5 bg-gradient-to-r from-transparent via-[#00D4FF] to-transparent shadow-[0_0_15px_#00D4FF] opacity-90 pointer-events-none"
-              style={{
-                animation: "scanLine 3s linear infinite",
-              }}
-            />
+        <div className="fixed inset-0 bg-[#15101F]/85 backdrop-blur-md z-50 flex items-center justify-center p-4">
+          {/* Frosted System Card Container */}
+          <div className="relative w-full max-w-sm frost rounded-2xl p-6 shadow-[0_8px_30px_rgba(0,0,0,0.4)] overflow-hidden">
 
-            {/* Glowing Custom Tech corners */}
-            <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-[#00D4FF]" />
-            <div className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-[#00D4FF]" />
-            <div className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-[#00D4FF]" />
-            <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-[#00D4FF]" />
+            {/* Soft lavender Tech corners */}
+            <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-[#C9B8F0]/30" />
+            <div className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-[#C9B8F0]/30" />
+            <div className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-[#C9B8F0]/30" />
+            <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-[#C9B8F0]/30" />
 
-            {/* Monospaced System Content */}
-            <div className="relative z-10 space-y-4 font-mono text-left">
-              <div className="flex items-center justify-between border-b border-[#00D4FF]/25 pb-3">
+            {/* System Content */}
+            <div className="relative z-10 space-y-4 text-left">
+              <div className="flex items-center justify-between border-b border-white/10 pb-3">
                 <div className="flex items-center gap-2">
-                  <Terminal className="w-5 h-5 text-[#00D4FF] animate-pulse" />
-                  <h3 className="text-sm font-black text-[#00D4FF] tracking-wider uppercase">
+                  <Terminal className="w-5 h-5 text-[#C9B8F0]" />
+                  <h3 className="text-sm font-display font-semibold text-[#C9B8F0] tracking-wider uppercase">
                     SYSTEM ALERT HUD
                   </h3>
                 </div>
-                <span className="text-[8px] px-1.5 py-0.5 bg-[#00D4FF]/10 text-[#00D4FF] border border-[#00D4FF]/25 rounded">
+                <span className="font-monument tracking-[0.3em] uppercase text-[#C9B8F0]/60 text-[8px] px-1.5 py-0.5 border border-white/10 rounded">
                   SYS_V2.10
                 </span>
               </div>
 
-              <div className="space-y-3.5 text-xs text-gray-300 leading-relaxed">
+              <div className="space-y-3.5 text-xs text-[#C7BBE2] leading-relaxed">
                 <div className="flex gap-2">
-                  <span className="text-[#00D4FF] font-black">&gt;&gt;</span>
+                  <span className="text-[#C9B8F0] font-semibold">&gt;&gt;</span>
                   <p>USER LINK CONFIRMED. RITUAL STATUS STABLE.</p>
                 </div>
                 {gate.active && (
-                  <div className="flex gap-2 text-cyan-400">
-                    <span className="text-[#00D4FF] font-black">&gt;&gt;</span>
-                    <p className="font-extrabold">EMERGENCY: ACTIVE PORTAL IS RAGING IN YOUR COORDINATES.</p>
+                  <div className="flex gap-2 text-[#C9B8F0]">
+                    <span className="text-[#C9B8F0] font-semibold">&gt;&gt;</span>
+                    <p className="font-semibold">EMERGENCY: ACTIVE PORTAL IS RAGING IN YOUR COORDINATES.</p>
                   </div>
                 )}
                 {boss.hp > 0 ? (
-                  <div className="flex gap-2 text-rose-400">
-                    <span className="text-rose-400 font-black">&gt;&gt;</span>
+                  <div className="flex gap-2 text-rose-300/80">
+                    <span className="text-rose-300/80 font-semibold">&gt;&gt;</span>
                     <p>GUILD MISSION: STRIP THE Demon King IN THE BOSS LOBBY.</p>
                   </div>
                 ) : (
-                  <div className="flex gap-2 text-emerald-400">
-                    <span className="text-emerald-400 font-black">&gt;&gt;</span>
+                  <div className="flex gap-2 text-[#C9B8F0]">
+                    <span className="text-[#C9B8F0] font-semibold">&gt;&gt;</span>
                     <p>CONGRATULATIONS: DEMON SOVEREIGN HAS BEEN OBLITERATED.</p>
                   </div>
                 )}
@@ -720,29 +780,20 @@ export function HomeOverview({ currentUser, workoutHistory, quests, onNavigateTo
               <div className="pt-4 flex justify-end">
                 <button
                   onClick={() => setShowSystemWindow(false)}
-                  className="px-4 py-2 bg-[#001D33] hover:bg-[#002F4F] text-[#00D4FF] text-xs font-black uppercase border border-[#00D4FF]/30 hover:border-[#00D4FF] rounded-xl transition-all cursor-pointer shadow-[0_0_12px_rgba(0,212,255,0.15)]"
+                  className="px-4 py-2 bg-[#B9A3E3] hover:bg-[#C7B5EC] text-[#241B3A] text-xs font-semibold uppercase rounded-full transition-all cursor-pointer"
                   style={{ minHeight: "40px" }}
                 >
                   DISMISS OVERLAY
                 </button>
               </div>
             </div>
-            
+
             {/* Inner aesthetic grid elements */}
-            <div className="absolute inset-2 border border-cyan-500/5 rounded-2xl pointer-events-none" />
+            <div className="absolute inset-2 border border-white/10 rounded-2xl pointer-events-none" />
           </div>
 
           {/* Injected animations */}
           <style>{`
-            @keyframes scanLine {
-              0% { top: 0%; }
-              50% { top: 100%; }
-              100% { top: 0%; }
-            }
-            @keyframes blink {
-              0%, 100% { opacity: 1; }
-              50% { opacity: 0; }
-            }
             @keyframes flicker {
               0%, 100% { transform: scale(1) rotate(-1.5deg); }
               50% { transform: scale(1.1) rotate(2deg) skewX(2deg); }

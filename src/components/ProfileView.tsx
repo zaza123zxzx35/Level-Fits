@@ -114,15 +114,15 @@ export function ProfileView({ currentUser, onRefreshProfile, onLogout }: Profile
   return (
     <div className="space-y-6">
       {/* Account Info Card */}
-      <div className="p-6 bg-slate-900/90 border border-slate-800 rounded-2xl shadow-xl space-y-6">
-        <h3 className="text-xl font-bold text-yellow-500 uppercase font-sans tracking-wide">
+      <div className="p-6 frost rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.4)] space-y-6">
+        <h3 className="text-xl font-display font-semibold text-[#EDE6FA] tracking-wide">
           Arcane Account Configurations
         </h3>
 
         <div className="space-y-4 font-mono">
           {/* Display Name */}
-          <div className="flex justify-between items-center py-1 border-b border-slate-950 text-sm">
-            <span className="text-gray-400">HERO HANDLE:</span>
+          <div className="flex justify-between items-center py-1 border-b border-white/10 text-sm">
+            <span className="text-[#9A8FB8]">HERO HANDLE:</span>
             {editing ? (
               <form onSubmit={handleUpdateName} className="flex gap-2">
                 <input
@@ -130,12 +130,12 @@ export function ProfileView({ currentUser, onRefreshProfile, onLogout }: Profile
                   maxLength={15}
                   value={nameField}
                   onChange={(e) => setNameField(e.target.value)}
-                  className="bg-slate-950 text-white rounded px-2 py-1 text-xs font-mono h-[32px] border border-slate-700"
+                  className="bg-[#15101F] text-[#EDE6FA] rounded px-2 py-1 text-xs font-mono h-[32px] border border-white/10"
                 />
                 <button
                   type="submit"
                   disabled={updating}
-                  className="p-1 px-2.5 bg-purple-700 text-white rounded text-xs uppercase font-black cursor-pointer"
+                  className="p-1 px-2.5 bg-[#B9A3E3] hover:bg-[#C7B5EC] text-[#241B3A] rounded-full text-xs uppercase font-black cursor-pointer"
                   style={{ minHeight: "32px" }}
                 >
                   <Check className="w-4 h-4" />
@@ -143,10 +143,10 @@ export function ProfileView({ currentUser, onRefreshProfile, onLogout }: Profile
               </form>
             ) : (
               <div className="flex items-center gap-2">
-                <span className="text-white font-bold">{currentUser.displayName}</span>
+                <span className="text-[#EDE6FA] font-bold">{currentUser.displayName}</span>
                 <button
                   onClick={() => setEditing(true)}
-                  className="p-1 text-yellow-500 hover:text-white cursor-pointer"
+                  className="p-1 text-[#C9B8F0] hover:text-[#EDE6FA] cursor-pointer"
                   style={{ minWidth: "32px", minHeight: "32px" }}
                 >
                   <Edit2 className="w-3.5 h-3.5" />
@@ -156,33 +156,33 @@ export function ProfileView({ currentUser, onRefreshProfile, onLogout }: Profile
           </div>
 
           {/* Email */}
-          <div className="flex justify-between items-center py-1 border-b border-slate-950 text-sm">
-            <span className="text-gray-400">REGISTERED EMAIL:</span>
-            <span className="text-gray-300 select-all">{currentUser.email}</span>
+          <div className="flex justify-between items-center py-1 border-b border-white/10 text-sm">
+            <span className="text-[#9A8FB8]">REGISTERED EMAIL:</span>
+            <span className="text-[#C7BBE2] select-all">{currentUser.email}</span>
           </div>
 
           {/* ID */}
-          <div className="flex justify-between items-center py-1 border-b border-slate-950 text-[11px]">
-            <span className="text-gray-400">HERO UUID:</span>
-            <span className="text-gray-500 select-all font-sans">{currentUser.uid}</span>
+          <div className="flex justify-between items-center py-1 border-b border-white/10 text-[11px]">
+            <span className="text-[#9A8FB8]">HERO UUID:</span>
+            <span className="text-[#9A8FB8] select-all font-sans">{currentUser.uid}</span>
           </div>
 
           {/* Class */}
           <div className="flex justify-between items-center py-1 text-sm">
-            <span className="text-gray-400">CHARACTER CLASS:</span>
-            <span className="text-[#7B2FBE] font-black uppercase">{currentUser.characterClass}</span>
+            <span className="text-[#9A8FB8]">CHARACTER CLASS:</span>
+            <span className="text-[#C9B8F0] font-black uppercase">{currentUser.characterClass}</span>
           </div>
         </div>
 
-        {success && <p className="text-emerald-400 text-xs font-mono">Destiny handle restructured!</p>}
+        {success && <p className="text-[#C9B8F0] text-xs font-mono">Destiny handle restructured!</p>}
       </div>
 
       {/* Dangerous Operations Zone */}
-      <div className="p-6 bg-slate-900/90 border border-red-500/20 rounded-2xl shadow-xl space-y-4">
-        <h3 className="text-lg font-bold text-red-400 uppercase font-sans tracking-wide flex items-center gap-2">
-          <ShieldAlert className="w-5 h-5 text-red-500 animate-pulse" /> Extreme Operations Zone
+      <div className="p-6 frost rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.4)] space-y-4">
+        <h3 className="text-lg font-display font-semibold text-rose-300/80 tracking-wide flex items-center gap-2">
+          <ShieldAlert className="w-5 h-5 text-rose-300/80 animate-pulse" /> Extreme Operations Zone
         </h3>
-        <p className="text-xs text-gray-400 font-mono">
+        <p className="text-xs text-[#9A8FB8] font-mono">
           Perform administrative actions to clean cache, refresh profiles, or reset character histories completely.
         </p>
 
@@ -191,7 +191,7 @@ export function ProfileView({ currentUser, onRefreshProfile, onLogout }: Profile
           <button
             onClick={handleResetCharacter}
             disabled={resetting}
-            className="w-full py-3 bg-red-950/20 border border-red-500/40 text-red-400 hover:bg-red-950/40 font-bold uppercase rounded-xl transition-colors font-mono text-xs tracking-wider flex items-center justify-center gap-2 cursor-pointer disabled:opacity-45"
+            className="w-full py-3 frost text-rose-300/80 hover:text-rose-200 font-bold uppercase rounded-full transition-colors font-mono text-xs tracking-wider flex items-center justify-center gap-2 cursor-pointer disabled:opacity-45"
             style={{ minHeight: "44px" }}
           >
             <RefreshCw className={`w-4 h-4 ${resetting ? "animate-spin" : ""}`} />
@@ -201,7 +201,7 @@ export function ProfileView({ currentUser, onRefreshProfile, onLogout }: Profile
           {/* Logout button */}
           <button
             onClick={handleLogout}
-            className="w-full py-3 bg-slate-950 hover:bg-slate-900 border border-slate-800 text-gray-400 hover:text-white font-bold uppercase rounded-xl transition-colors font-mono text-xs tracking-wider flex items-center justify-center gap-2 cursor-pointer"
+            className="w-full py-3 frost text-rose-300/80 hover:text-rose-200 font-bold uppercase rounded-full transition-colors font-mono text-xs tracking-wider flex items-center justify-center gap-2 cursor-pointer"
             style={{ minHeight: "44px" }}
           >
             <LogOut className="w-4 h-4" /> Exit Realm (Logout)

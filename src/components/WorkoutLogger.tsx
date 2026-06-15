@@ -18,10 +18,10 @@ interface WorkoutLoggerProps {
 }
 
 const CATEGORIES: { name: WorkoutCategory; icon: any; color: string; desc: string; stat: string }[] = [
-  { name: "Strength", icon: Dumbbell, color: "from-rose-600 to-red-700", desc: "Forges STR (Strength) + VIT (Vitality)", stat: "STR" },
-  { name: "Cardio", icon: Flame, color: "from-amber-500 to-orange-600", desc: "Builds END (Endurance) + AGI (Agility)", stat: "END" },
-  { name: "Flexibility", icon: Heart, color: "from-emerald-500 to-teal-600", desc: "Improves AGI (Agility) + VIT (Vitality)", stat: "AGI" },
-  { name: "Endurance", icon: Zap, color: "from-indigo-600 to-purple-600", desc: "Boosts VIT (Vitality) + END (Endurance)", stat: "VIT" },
+  { name: "Strength", icon: Dumbbell, color: "from-[#8A5CF0] to-[#5B3FA0]", desc: "Forges STR (Strength) + VIT (Vitality)", stat: "STR" },
+  { name: "Cardio", icon: Flame, color: "from-[#7C5FC0] to-[#C9B8F0]", desc: "Builds END (Endurance) + AGI (Agility)", stat: "END" },
+  { name: "Flexibility", icon: Heart, color: "from-[#B9A3E3] to-[#8A5CF0]", desc: "Improves AGI (Agility) + VIT (Vitality)", stat: "AGI" },
+  { name: "Endurance", icon: Zap, color: "from-[#6E4FB0] to-[#9F7CE0]", desc: "Boosts VIT (Vitality) + END (Endurance)", stat: "VIT" },
 ];
 
 export function WorkoutLogger({ onLogWorkout, isLogging, workoutHistory = [] }: WorkoutLoggerProps) {
@@ -107,47 +107,42 @@ export function WorkoutLogger({ onLogWorkout, isLogging, workoutHistory = [] }: 
   return (
     <div className="space-y-4">
       {/* Boss HP Bar representing weekly progress */}
-      <div className="p-4 bg-[#090b11]/85 border border-red-500/35 rounded-2xl space-y-2 relative overflow-hidden shadow-xl">
-        {/* Subtle background red pulse */}
-        <div className="absolute inset-0 bg-red-600/5 animate-[pulseRed_2.5s_ease-in-out_infinite] pointer-events-none" />
+      <div className="p-4 frost rounded-2xl space-y-2 relative overflow-hidden shadow-[0_8px_30px_rgba(0,0,0,0.4)]">
 
-        <div className="flex justify-between items-center text-[10px] font-mono font-black relative z-10">
-          <div className="flex items-center gap-1.5 text-red-500">
-            <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-ping" />
+        <div className="flex justify-between items-center text-[10px] font-monument font-semibold tracking-[0.3em] relative z-10">
+          <div className="flex items-center gap-1.5 text-[#C9B8F0]">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#C9B8F0]" />
             <span className="uppercase tracking-wider">WEEKLY ENCOUNTER: REYNOLD, THE BEAST MONARCH</span>
           </div>
-          <span className="text-gray-500 uppercase text-[8px] bg-red-950/40 px-1 border border-red-900/30">MAX_RAID</span>
+          <span className="text-[#9A8FB8] uppercase text-[8px] bg-[#15101F] px-1 border border-white/10">MAX_RAID</span>
         </div>
 
-        <div className="flex justify-between items-baseline font-mono text-[9px] font-black text-red-400/90 relative z-10">
+        <div className="flex justify-between items-baseline font-monument text-[9px] font-semibold text-[#C7BBE2] relative z-10">
           <span>Boss Hp Level: {bossHpPercent}%</span>
-          <span className="text-red-400 font-extrabold">{Math.max(0, weeklyMinuteGoal - Math.round(minutesLogged))} / {weeklyMinuteGoal} HP Mins</span>
+          <span className="text-[#C9B8F0] font-semibold">{Math.max(0, weeklyMinuteGoal - Math.round(minutesLogged))} / {weeklyMinuteGoal} HP Mins</span>
         </div>
 
-        {/* HP Red Bar Slider */}
-        <div className="h-2.5 w-full bg-slate-950 border border-red-950 rounded relative overflow-hidden shadow-inner z-10">
-          <div 
-            className="h-full bg-gradient-to-r from-red-850 via-rose-600 to-red-500 transition-all duration-700 ease-in-out"
+        {/* HP Bar Slider */}
+        <div className="h-2.5 w-full bg-[#15101F] border border-white/10 rounded relative overflow-hidden z-10">
+          <div
+            className="h-full bg-gradient-to-r from-[#7C5FC0] to-[#C9B8F0] transition-all duration-700 ease-in-out"
             style={{ width: `${bossHpPercent}%` }}
           />
-          <div className="absolute inset-0 bg-[linear-gradient(rgba(18,10,10,0.1)_50%,_rgba(0,0,0,0.35)_50%)] bg-[length:100%_4px] pointer-events-none" />
         </div>
 
-        <p className="text-[8.5px] text-gray-500 font-mono italic text-right mt-1 relative z-10">
+        <p className="text-[8.5px] text-[#9A8FB8] font-display italic text-right mt-1 relative z-10">
           {bossHpPercent <= 0 
             ? "👑 THRESHOLD CLEAR: Beast Monarch defeated. S-RANK loot is yours." 
             : "⚔️ Burn physical calories to apply massive impact points to the monarch."}
         </p>
       </div>
 
-      <div className="p-6 bg-slate-900/90 border border-purple-550/30 rounded-2xl shadow-xl shadow-black relative overflow-hidden pb-10">
-        {/* Background radial highlight */}
-        <div className="absolute top-0 right-0 w-32 h-32 bg-purple-600/10 rounded-full blur-2xl pointer-events-none" />
+      <div className="p-6 frost rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.4)] relative overflow-hidden pb-10">
 
-        <h2 className="text-2xl font-bold font-sans text-yellow-400 flex items-center gap-2 mb-1.5 uppercase tracking-wide">
-          <Dumbbell className="w-6 h-6 animate-bounce" /> Log Exercise Ritual
+        <h2 className="text-2xl font-display font-semibold text-[#EDE6FA] flex items-center gap-2 mb-1.5 tracking-wide">
+          <Dumbbell className="w-6 h-6 text-[#C9B8F0]" /> Log Exercise Ritual
         </h2>
-        <p className="text-gray-400 text-xs mb-6 font-mono uppercase tracking-wider">
+        <p className="text-[#9A8FB8] text-xs mb-6 font-monument tracking-[0.3em] uppercase">
           Transform physical fatigue into infinite power points.
         </p>
 
@@ -158,9 +153,9 @@ export function WorkoutLogger({ onLogWorkout, isLogging, workoutHistory = [] }: 
               initial={{ scale: 0.5, y: -20, opacity: 0 }}
               animate={{ scale: 1, y: 0, opacity: 1 }}
               exit={{ scale: 0.8, y: -40, opacity: 0 }}
-              className="absolute top-4 right-4 z-40 bg-gradient-to-r from-yellow-500 to-amber-600 text-slate-950 font-black text-xs uppercase px-4 py-2.5 rounded-xl flex items-center gap-2 border border-yellow-300 shadow-lg shadow-yellow-500/20"
+              className="absolute top-4 right-4 z-40 bg-[#B9A3E3] text-[#241B3A] font-semibold text-xs uppercase px-4 py-2.5 rounded-full flex items-center gap-2 border border-[#C9B8F0]/30 shadow-[0_8px_30px_rgba(0,0,0,0.4)]"
             >
-              <Sparkles className="w-4 h-4 text-slate-950 animate-spin" />
+              <Sparkles className="w-4 h-4 text-[#241B3A]" />
               XP Gained: +{successXp} XP!
             </motion.div>
           )}
@@ -169,7 +164,7 @@ export function WorkoutLogger({ onLogWorkout, isLogging, workoutHistory = [] }: 
       <form onSubmit={handleSubmit} className="space-y-5">
         {/* Category Icons Selector */}
         <div>
-          <label className="text-gray-300 text-xs font-bold uppercase tracking-widest block mb-2.5 font-mono">
+          <label className="text-[#C9B8F0]/60 text-xs font-monument uppercase tracking-[0.3em] block mb-2.5">
             Exercise Category (Determines Stat Growth)
           </label>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -181,16 +176,16 @@ export function WorkoutLogger({ onLogWorkout, isLogging, workoutHistory = [] }: 
                   key={cat.name}
                   type="button"
                   onClick={() => setCategory(cat.name)}
-                  className={`relative flex flex-col items-center justify-center p-3.5 rounded-xl border-2 transition-all duration-150 text-center select-none cursor-pointer h-24 ${
+                  className={`relative flex flex-col items-center justify-center p-3.5 rounded-xl border transition-all duration-150 text-center select-none cursor-pointer h-24 ${
                     isSelected
-                      ? "border-yellow-400 bg-purple-950/40 text-yellow-300"
-                      : "border-slate-800 bg-slate-950/80 hover:bg-slate-900/50 text-gray-400"
+                      ? "border-[#C9B8F0]/40 bg-[#3A2F58] text-[#C9B8F0]"
+                      : "border-white/10 bg-[#15101F] hover:bg-[#1d1729] text-[#9A8FB8]"
                   }`}
                   style={{ minHeight: "44px" }}
                 >
-                  <Icon className={`w-6 h-6 mb-1 ${isSelected ? "text-yellow-400 scale-110" : "text-gray-400"}`} />
-                  <span className="text-xs font-black uppercase font-mono">{cat.name}</span>
-                  <span className="text-[9px] text-gray-500 font-mono mt-0.5 uppercase tracking-tighter sm:block hidden">{cat.stat} stat up</span>
+                  <Icon className={`w-6 h-6 mb-1 ${isSelected ? "text-[#C9B8F0] scale-110" : "text-[#9A8FB8]"}`} />
+                  <span className="text-xs font-display font-semibold">{cat.name}</span>
+                  <span className="text-[9px] text-[#9A8FB8] font-monument mt-0.5 uppercase tracking-tighter sm:block hidden">{cat.stat} stat up</span>
                 </button>
               );
             })}
@@ -199,7 +194,7 @@ export function WorkoutLogger({ onLogWorkout, isLogging, workoutHistory = [] }: 
 
         {/* Name input */}
         <div>
-          <label className="text-gray-300 text-xs font-bold uppercase tracking-widest block mb-1.5 font-mono">
+          <label className="text-[#C9B8F0]/60 text-xs font-monument uppercase tracking-[0.3em] block mb-1.5">
             Exercise Name
           </label>
           <input
@@ -208,7 +203,7 @@ export function WorkoutLogger({ onLogWorkout, isLogging, workoutHistory = [] }: 
             placeholder="e.g., Deep Pit Squats, Abyssal Treadmill, Fireball Yoga"
             value={exerciseName}
             onChange={(e) => setExerciseName(e.target.value)}
-            className="w-full h-12 px-4 rounded-xl border-2 border-slate-800 bg-slate-950/80 text-white placeholder-gray-600 focus:outline-none focus:border-purple-500 transition-colors font-sans text-sm"
+            className="w-full h-12 px-4 rounded-xl border border-white/10 bg-[#15101F] text-[#EDE6FA] placeholder-[#9A8FB8] focus:outline-none focus:border-[#C9B8F0]/50 transition-colors text-sm"
           />
         </div>
 
@@ -216,7 +211,7 @@ export function WorkoutLogger({ onLogWorkout, isLogging, workoutHistory = [] }: 
         {category === "Strength" ? (
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-gray-300 text-xs font-bold uppercase tracking-widest block mb-1.5 font-mono">
+              <label className="text-[#C9B8F0]/60 text-xs font-monument uppercase tracking-[0.3em] block mb-1.5">
                 Sets Count
               </label>
               <div className="flex items-center gap-2">
@@ -224,18 +219,18 @@ export function WorkoutLogger({ onLogWorkout, isLogging, workoutHistory = [] }: 
                   type="button"
                   disabled={sets <= 1}
                   onClick={() => setSets(sets - 1)}
-                  className="w-10 h-10 bg-slate-950 text-white font-black rounded-lg border border-slate-800 hover:border-purple-500 flex items-center justify-center cursor-pointer text-lg font-mono disabled:opacity-30 disabled:pointer-events-none"
+                  className="w-10 h-10 bg-[#15101F] text-[#EDE6FA] font-semibold rounded-xl border border-white/10 hover:border-[#C9B8F0]/50 flex items-center justify-center cursor-pointer text-lg disabled:opacity-30 disabled:pointer-events-none"
                   style={{ minWidth: "44px", minHeight: "44px" }}
                 >
                   -
                 </button>
-                <div className="flex-1 text-center font-mono font-bold text-lg bg-slate-950/80 border border-slate-800 rounded-lg py-2">
-                  {sets} <span className="text-[10px] text-gray-500 font-bold block">SETS</span>
+                <div className="flex-1 text-center font-display font-semibold text-lg bg-[#15101F] border border-white/10 rounded-xl py-2 text-[#EDE6FA]">
+                  {sets} <span className="text-[10px] text-[#9A8FB8] font-monument tracking-[0.3em] block">SETS</span>
                 </div>
                 <button
                   type="button"
                   onClick={() => setSets(sets + 1)}
-                  className="w-10 h-10 bg-slate-950 text-white font-black rounded-lg border border-slate-800 hover:border-purple-500 flex items-center justify-center cursor-pointer text-lg font-mono"
+                  className="w-10 h-10 bg-[#15101F] text-[#EDE6FA] font-semibold rounded-xl border border-white/10 hover:border-[#C9B8F0]/50 flex items-center justify-center cursor-pointer text-lg"
                   style={{ minWidth: "44px", minHeight: "44px" }}
                 >
                   +
@@ -244,7 +239,7 @@ export function WorkoutLogger({ onLogWorkout, isLogging, workoutHistory = [] }: 
             </div>
 
             <div>
-              <label className="text-gray-300 text-xs font-bold uppercase tracking-widest block mb-1.5 font-mono">
+              <label className="text-[#C9B8F0]/60 text-xs font-monument uppercase tracking-[0.3em] block mb-1.5">
                 Reps count
               </label>
               <div className="flex items-center gap-2">
@@ -252,18 +247,18 @@ export function WorkoutLogger({ onLogWorkout, isLogging, workoutHistory = [] }: 
                   type="button"
                   disabled={reps <= 1}
                   onClick={() => setReps(reps - 1)}
-                  className="w-10 h-10 bg-slate-950 text-white font-black rounded-lg border border-slate-800 hover:border-purple-500 flex items-center justify-center cursor-pointer text-lg font-mono disabled:opacity-30 disabled:pointer-events-none"
+                  className="w-10 h-10 bg-[#15101F] text-[#EDE6FA] font-semibold rounded-xl border border-white/10 hover:border-[#C9B8F0]/50 flex items-center justify-center cursor-pointer text-lg disabled:opacity-30 disabled:pointer-events-none"
                   style={{ minWidth: "44px", minHeight: "44px" }}
                 >
                   -
                 </button>
-                <div className="flex-1 text-center font-mono font-bold text-lg bg-slate-950/80 border border-slate-800 rounded-lg py-2">
-                  {reps} <span className="text-[10px] text-gray-500 font-bold block">REPS</span>
+                <div className="flex-1 text-center font-display font-semibold text-lg bg-[#15101F] border border-white/10 rounded-xl py-2 text-[#EDE6FA]">
+                  {reps} <span className="text-[10px] text-[#9A8FB8] font-monument tracking-[0.3em] block">REPS</span>
                 </div>
                 <button
                   type="button"
                   onClick={() => setReps(reps + 1)}
-                  className="w-10 h-10 bg-slate-950 text-white font-black rounded-lg border border-slate-800 hover:border-purple-500 flex items-center justify-center cursor-pointer text-lg font-mono"
+                  className="w-10 h-10 bg-[#15101F] text-[#EDE6FA] font-semibold rounded-xl border border-white/10 hover:border-[#C9B8F0]/50 flex items-center justify-center cursor-pointer text-lg"
                   style={{ minWidth: "44px", minHeight: "44px" }}
                 >
                   +
@@ -273,7 +268,7 @@ export function WorkoutLogger({ onLogWorkout, isLogging, workoutHistory = [] }: 
           </div>
         ) : (
           <div>
-            <label className="text-gray-300 text-xs font-bold uppercase tracking-widest block mb-1.5 font-mono">
+            <label className="text-[#C9B8F0]/60 text-xs font-monument uppercase tracking-[0.3em] block mb-1.5">
               Ritual Duration (Minutes)
             </label>
             <div className="flex items-center gap-2.5">
@@ -281,18 +276,18 @@ export function WorkoutLogger({ onLogWorkout, isLogging, workoutHistory = [] }: 
                 type="button"
                 disabled={duration <= 5}
                 onClick={() => setDuration(Math.max(5, duration - 5))}
-                className="w-11 h-11 bg-slate-950 text-white font-black rounded-lg border border-slate-800 hover:border-purple-500 flex items-center justify-center cursor-pointer text-lg font-mono"
+                className="w-11 h-11 bg-[#15101F] text-[#EDE6FA] font-semibold rounded-xl border border-white/10 hover:border-[#C9B8F0]/50 flex items-center justify-center cursor-pointer text-lg"
                 style={{ minWidth: "44px", minHeight: "44px" }}
               >
                 -
               </button>
-              <div className="flex-1 text-center font-mono font-bold text-lg bg-slate-950/80 border border-slate-800 rounded-lg py-2">
-                {duration} <span className="text-gray-500 text-xs uppercase ml-1">mins</span>
+              <div className="flex-1 text-center font-display font-semibold text-lg bg-[#15101F] border border-white/10 rounded-xl py-2 text-[#EDE6FA]">
+                {duration} <span className="text-[#9A8FB8] text-xs uppercase ml-1">mins</span>
               </div>
               <button
                 type="button"
                 onClick={() => setDuration(duration + 5)}
-                className="w-11 h-11 bg-slate-950 text-white font-black rounded-lg border border-slate-800 hover:border-purple-500 flex items-center justify-center cursor-pointer text-lg font-mono"
+                className="w-11 h-11 bg-[#15101F] text-[#EDE6FA] font-semibold rounded-xl border border-white/10 hover:border-[#C9B8F0]/50 flex items-center justify-center cursor-pointer text-lg"
                 style={{ minWidth: "44px", minHeight: "44px" }}
               >
                 +
@@ -303,9 +298,9 @@ export function WorkoutLogger({ onLogWorkout, isLogging, workoutHistory = [] }: 
 
         {/* Intensity rating 1-5 */}
         <div>
-          <div className="flex justify-between items-center mb-1.5 font-mono text-xs">
-            <span className="text-gray-300 font-bold uppercase tracking-widest">Ritual Intensity</span>
-            <span className="text-yellow-400 font-bold uppercase tracking-wider">Level {intensity}</span>
+          <div className="flex justify-between items-center mb-1.5 text-xs">
+            <span className="text-[#C9B8F0]/60 font-monument uppercase tracking-[0.3em]">Ritual Intensity</span>
+            <span className="text-[#C9B8F0] font-monument uppercase tracking-[0.3em]">Level {intensity}</span>
           </div>
           <div className="flex items-center gap-2">
             {[1, 2, 3, 4, 5].map((level) => (
@@ -313,10 +308,10 @@ export function WorkoutLogger({ onLogWorkout, isLogging, workoutHistory = [] }: 
                 key={level}
                 type="button"
                 onClick={() => setIntensity(level)}
-                className={`flex-1 h-11 rounded-lg border-2 font-mono font-bold text-sm transition-all cursor-pointer ${
+                className={`flex-1 h-11 rounded-xl border font-display font-semibold text-sm transition-all cursor-pointer ${
                   intensity >= level
-                    ? "bg-gradient-to-r from-purple-800 to-purple-600 border-purple-500 text-yellow-300 shadow shadow-purple-900"
-                    : "bg-slate-950/80 border-slate-800 text-gray-500 hover:bg-slate-900"
+                    ? "bg-[#3A2F58] border-[#C9B8F0]/40 text-[#C9B8F0]"
+                    : "bg-[#15101F] border-white/10 text-[#9A8FB8] hover:bg-[#1d1729]"
                 }`}
                 style={{ minHeight: "44px" }}
               >
@@ -327,9 +322,9 @@ export function WorkoutLogger({ onLogWorkout, isLogging, workoutHistory = [] }: 
         </div>
 
         {/* Calculated XP Preview */}
-        <div className="p-3 bg-purple-950/40 border-2 border-dashed border-purple-500/20 rounded-xl flex justify-between items-center font-mono">
-          <span className="text-gray-400 text-xs font-bold uppercase tracking-wider">Estimated XP Yield:</span>
-          <span className="text-yellow-400 font-black text-lg animate-pulse flex items-center gap-1">
+        <div className="p-3 frost rounded-xl flex justify-between items-center">
+          <span className="text-[#C9B8F0]/60 text-xs font-monument uppercase tracking-[0.3em]">Estimated XP Yield:</span>
+          <span className="text-[#C9B8F0] font-display font-semibold text-lg flex items-center gap-1">
             <Sparkles className="w-4 h-4" /> {calculateXp()} XP
           </span>
         </div>
@@ -338,11 +333,11 @@ export function WorkoutLogger({ onLogWorkout, isLogging, workoutHistory = [] }: 
         <button
           type="submit"
           disabled={isLogging || !exerciseName.trim()}
-          className="relative w-full h-13 bg-gradient-to-r from-purple-800 via-purple-700 to-purple-900 border-2 border-purple-500 text-white font-black uppercase text-sm tracking-widest rounded-xl shadow-xl shadow-purple-950 hover:scale-[1.01] active:scale-[0.99] transition-all disabled:opacity-45 disabled:pointer-events-none cursor-pointer flex items-center justify-center gap-2"
+          className="relative w-full h-13 bg-[#B9A3E3] hover:bg-[#C7B5EC] text-[#241B3A] font-display font-semibold text-sm tracking-wide rounded-full hover:scale-[1.01] active:scale-[0.99] transition-all disabled:opacity-45 disabled:pointer-events-none cursor-pointer flex items-center justify-center gap-2"
           style={{ minHeight: "44px" }}
         >
           {isLogging ? (
-            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            <div className="w-5 h-5 border-2 border-[#241B3A] border-t-transparent rounded-full animate-spin" />
           ) : (
             <>
               Log Ritual Result <Plus className="w-5 h-5" />
@@ -355,7 +350,7 @@ export function WorkoutLogger({ onLogWorkout, isLogging, workoutHistory = [] }: 
       {floatingTexts.map(floater => (
         <span
           key={floater.id}
-          className="absolute z-50 text-[#00D4FF] font-black text-2xl tracking-widest pointer-events-none select-none drop-shadow-[0_0_12px_rgba(0,212,255,0.95)] filter animate-[floatDmg_1.4s_cubic-bezier(0.18,0.89,0.32,1.28)_forwards]"
+          className="absolute z-50 text-[#C9B8F0] font-display font-semibold text-2xl tracking-widest pointer-events-none select-none animate-[floatDmg_1.4s_cubic-bezier(0.18,0.89,0.32,1.28)_forwards]"
           style={{
             top: `55%`,
             left: `calc(50% + ${floater.x}px)`,

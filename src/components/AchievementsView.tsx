@@ -52,8 +52,8 @@ export const ACHIEVEMENTS_LIST: Achievement[] = [
     category: "General",
     targetValue: 1,
     getCurrentValue: (workouts) => workouts.length,
-    color: "text-cyan-400 bg-cyan-950/40 border-cyan-500/30",
-    glow: "shadow-cyan-500/20"
+    color: "text-[#C9B8F0] frost border-[#C9B8F0]/40",
+    glow: "shadow-[0_8px_30px_rgba(0,0,0,0.4)]"
   },
   {
     id: "milestone_strength",
@@ -66,8 +66,8 @@ export const ACHIEVEMENTS_LIST: Achievement[] = [
     category: "Strength",
     targetValue: 3,
     getCurrentValue: (workouts) => workouts.filter(w => w.category === "Strength").length,
-    color: "text-rose-400 bg-rose-950/40 border-rose-500/30",
-    glow: "shadow-rose-500/20"
+    color: "text-[#C9B8F0] frost border-[#C9B8F0]/40",
+    glow: "shadow-[0_8px_30px_rgba(0,0,0,0.4)]"
   },
   {
     id: "milestone_duration",
@@ -80,8 +80,8 @@ export const ACHIEVEMENTS_LIST: Achievement[] = [
     category: "General",
     targetValue: 100,
     getCurrentValue: (workouts) => workouts.reduce((sum, w) => sum + (w.duration || 0), 0),
-    color: "text-amber-400 bg-amber-950/40 border-amber-500/30",
-    glow: "shadow-amber-500/20"
+    color: "text-[#C9B8F0] frost border-[#C9B8F0]/40",
+    glow: "shadow-[0_8px_30px_rgba(0,0,0,0.4)]"
   },
   {
     id: "milestone_cardio",
@@ -94,8 +94,8 @@ export const ACHIEVEMENTS_LIST: Achievement[] = [
     category: "Cardio",
     targetValue: 60,
     getCurrentValue: (workouts) => workouts.filter(w => w.category === "Cardio").reduce((sum, w) => sum + (w.duration || 0), 0),
-    color: "text-orange-400 bg-orange-950/40 border-orange-500/30",
-    glow: "shadow-orange-500/20"
+    color: "text-[#C9B8F0] frost border-[#C9B8F0]/40",
+    glow: "shadow-[0_8px_30px_rgba(0,0,0,0.4)]"
   },
   {
     id: "milestone_limit",
@@ -108,8 +108,8 @@ export const ACHIEVEMENTS_LIST: Achievement[] = [
     category: "General",
     targetValue: 1,
     getCurrentValue: (workouts) => workouts.some(w => w.intensity === 5) ? 1 : 0,
-    color: "text-purple-400 bg-purple-950/40 border-purple-500/30",
-    glow: "shadow-purple-500/20"
+    color: "text-[#C9B8F0] frost border-[#C9B8F0]/40",
+    glow: "shadow-[0_8px_30px_rgba(0,0,0,0.4)]"
   },
   {
     id: "milestone_level",
@@ -122,8 +122,8 @@ export const ACHIEVEMENTS_LIST: Achievement[] = [
     category: "Level",
     targetValue: 5,
     getCurrentValue: (_, user) => user.level,
-    color: "text-yellow-400 bg-yellow-950/40 border-yellow-500/30",
-    glow: "shadow-yellow-500/20"
+    color: "text-[#C9B8F0] frost border-[#C9B8F0]/40",
+    glow: "shadow-[0_8px_30px_rgba(0,0,0,0.4)]"
   }
 ];
 
@@ -212,37 +212,36 @@ export function AchievementsView({ currentUser, workoutHistory, onRefreshProfile
     <div className="space-y-6">
       
       {/* Title Panel */}
-      <div className="p-5 bg-gradient-to-br from-slate-950 to-[#0F051D] border-2 border-purple-500/20 rounded-2xl relative shadow-2xl overflow-hidden">
-        <div className="absolute top-0 right-0 w-32 h-32 bg-[#7B2FBE]/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute left-2 top-2 px-1 rounded bg-[#00C8FF]/15 text-[#00C8FF] text-[8px] font-mono tracking-widest uppercase">
+      <div className="p-5 frost rounded-2xl relative shadow-[0_8px_30px_rgba(0,0,0,0.4)] overflow-hidden">
+        <div className="absolute left-2 top-2 px-1 rounded font-monument text-[#C9B8F0]/60 text-[8px] tracking-[0.3em] uppercase">
           ACHIEVEMENTS_MATRIX_SECURE
         </div>
 
         <div className="flex items-center gap-3 mt-2">
-          <div className="p-2 bg-purple-950/60 border border-purple-500/40 rounded-xl">
-            <Trophy className="w-6 h-6 text-yellow-400 animate-pulse" />
+          <div className="p-2 frost border border-[#C9B8F0]/40 rounded-2xl">
+            <Trophy className="w-6 h-6 text-[#C9B8F0]" />
           </div>
           <div>
-            <h3 className="text-lg font-black text-white font-sans tracking-wide uppercase">
+            <h3 className="text-lg font-display font-semibold text-[#EDE6FA] tracking-wide">
               Monarch Achievements
             </h3>
-            <p className="text-[10px] text-gray-400 font-mono tracking-wider mt-0.5">
+            <p className="text-[10px] text-[#9A8FB8] font-monument tracking-[0.2em] uppercase mt-0.5">
               ACHIEVE LIFETIME MILESTONES TO REAP COSMETIC TITLES
             </p>
           </div>
         </div>
 
         {/* Status report */}
-        <div className="mt-4 grid grid-cols-2 gap-4 pt-3.5 border-t border-purple-550/10 text-center font-mono">
-          <div className="bg-slate-950/40 p-2 border border-slate-900 rounded-lg">
-            <span className="block text-[9px] text-[#00C8FF] font-black uppercase">Trials Cleared</span>
-            <span className="text-xl font-black text-white">
+        <div className="mt-4 grid grid-cols-2 gap-4 pt-3.5 border-t border-white/10 text-center">
+          <div className="bg-[#15101F] p-2 border border-white/10 rounded-2xl">
+            <span className="block text-[9px] text-[#C9B8F0] font-monument tracking-[0.15em] uppercase">Trials Cleared</span>
+            <span className="text-xl font-display font-semibold text-[#EDE6FA]">
               {ACHIEVEMENTS_LIST.filter(a => a.getCurrentValue(workoutHistory, currentUser) >= a.targetValue).length} / {ACHIEVEMENTS_LIST.length}
             </span>
           </div>
-          <div className="bg-slate-950/40 p-2 border border-slate-900 rounded-lg">
-            <span className="block text-[9px] text-purple-400 font-black uppercase">Titles Earned</span>
-            <span className="text-xl font-black text-white">
+          <div className="bg-[#15101F] p-2 border border-white/10 rounded-2xl">
+            <span className="block text-[9px] text-[#C9B8F0] font-monument tracking-[0.15em] uppercase">Titles Earned</span>
+            <span className="text-xl font-display font-semibold text-[#EDE6FA]">
               {ACHIEVEMENTS_LIST.filter(a => ownedBadges.includes(a.badgeId)).length} / {ACHIEVEMENTS_LIST.length}
             </span>
           </div>
@@ -250,25 +249,25 @@ export function AchievementsView({ currentUser, workoutHistory, onRefreshProfile
       </div>
 
       {/* Equipped Title Showcase */}
-      <div className="p-4 bg-slate-950 border border-slate-900 rounded-xl flex items-center justify-between text-left relative overflow-hidden">
+      <div className="p-4 frost rounded-2xl flex items-center justify-between text-left relative overflow-hidden">
         <div className="space-y-1">
-          <span className="text-[9px] font-mono font-black text-gray-500 uppercase tracking-widest block">Active Equipped Title</span>
+          <span className="text-[9px] font-monument text-[#9A8FB8] uppercase tracking-[0.3em] block">Active Equipped Title</span>
           {currentUser.equippedTitle ? (
             <div className="flex items-center gap-2">
-              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-black text-yellow-400 bg-yellow-950/50 border border-yellow-500/30 shadow-[0_0_8px_rgba(234,179,8,0.25)] uppercase tracking-widest animate-pulse">
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-monument text-[#C9B8F0] frost border border-[#C9B8F0]/40 uppercase tracking-[0.2em]">
                 Title: {ACHIEVEMENTS_LIST.find(a => a.badgeId === currentUser.equippedTitle)?.badgeTitle || currentUser.equippedTitle}
               </span>
             </div>
           ) : (
-            <span className="text-xs font-sans text-gray-400 italic">No Title Equipped. Unlock milestones below.</span>
+            <span className="text-xs font-sans text-[#9A8FB8] italic">No Title Equipped. Unlock milestones below.</span>
           )}
         </div>
-        
+
         {currentUser.equippedTitle && (
           <button
             onClick={() => handleEquipTitle(currentUser.equippedTitle!, "")}
             disabled={equippingId !== null}
-            className="px-2.5 py-1 text-[9px] font-mono font-black border border-red-500/40 text-red-400 rounded hover:bg-red-950/20 transition-colors"
+            className="px-2.5 py-1 text-[9px] font-monument frost border border-white/10 text-[#C7BBE2] rounded-full hover:text-[#EDE6FA] transition-colors"
           >
             Unequip
           </button>
@@ -281,10 +280,10 @@ export function AchievementsView({ currentUser, workoutHistory, onRefreshProfile
           <button
             key={cat}
             onClick={() => setFilterCategory(cat)}
-            className={`px-3 py-1.5 text-[10px] font-bold font-mono uppercase tracking-wider rounded-lg border transition-all shrink-0 cursor-pointer ${
+            className={`px-3 py-1.5 text-[10px] font-monument uppercase tracking-[0.15em] rounded-full transition-all shrink-0 cursor-pointer ${
               filterCategory === cat
-                ? "bg-[#07243B] border-[#00C8FF]/50 text-[#00C8FF]"
-                : "bg-slate-950 border-slate-800 text-gray-400 hover:text-white"
+                ? "frost border border-[#C9B8F0]/40 text-[#C9B8F0]"
+                : "frost text-[#C7BBE2] hover:text-[#EDE6FA]"
             }`}
             style={{ minHeight: "34px" }}
           >
@@ -305,26 +304,26 @@ export function AchievementsView({ currentUser, workoutHistory, onRefreshProfile
           const AchIcon = ach.icon;
 
           return (
-            <div 
+            <div
               key={ach.id}
-              className={`p-5 rounded-xl border transition-all ${
-                isUnlocked 
-                  ? "bg-[#0A0D18] border-purple-500/30" 
-                  : "bg-[#050710]/90 border-slate-900 opacity-60"
+              className={`p-5 rounded-2xl transition-all ${
+                isUnlocked
+                  ? "frost border border-[#C9B8F0]/40"
+                  : "bg-[#15101F] border border-white/10 opacity-60"
               }`}
             >
-              
+
               {/* Top info and status icon */}
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <div className={`p-2 rounded-xl border ${ach.color} ${isUnlocked ? ach.glow : ""}`}>
+                  <div className={`p-2 rounded-2xl border ${ach.color} ${isUnlocked ? ach.glow : ""}`}>
                     <AchIcon className="w-5 h-5" />
                   </div>
                   <div>
-                    <h4 className="text-xs font-black text-white uppercase tracking-wider font-mono">
+                    <h4 className="text-xs font-display font-semibold text-[#EDE6FA] tracking-wide">
                       {ach.title}
                     </h4>
-                    <p className="text-[10px] text-gray-400 mt-0.5 leading-relaxed font-sans max-w-[210px]">
+                    <p className="text-[10px] text-[#9A8FB8] mt-0.5 leading-relaxed font-sans max-w-[210px]">
                       {ach.desc}
                     </p>
                   </div>
@@ -333,11 +332,11 @@ export function AchievementsView({ currentUser, workoutHistory, onRefreshProfile
                 {/* Badge showcase overlay */}
                 <div className="text-right">
                   {isUnlocked ? (
-                    <span className="text-[8px] font-mono font-black text-emerald-400 uppercase bg-emerald-950/40 border border-emerald-500/30 px-1.5 py-0.5 rounded">
+                    <span className="text-[8px] font-monument tracking-[0.1em] text-[#C9B8F0] uppercase frost border border-[#C9B8F0]/40 px-1.5 py-0.5 rounded-full">
                       [CLEARED]
                     </span>
                   ) : (
-                    <span className="text-[8px] font-mono font-black text-slate-500 uppercase bg-slate-900 px-1.5 py-0.5 rounded">
+                    <span className="text-[8px] font-monument tracking-[0.1em] text-[#5A5270] uppercase bg-[#15101F] border border-white/10 px-1.5 py-0.5 rounded-full">
                       [LOCKED]
                     </span>
                   )}
@@ -346,27 +345,27 @@ export function AchievementsView({ currentUser, workoutHistory, onRefreshProfile
 
               {/* Progress slider bar */}
               <div className="mt-4 space-y-1.5">
-                <div className="flex justify-between text-[9px] font-mono text-gray-500">
+                <div className="flex justify-between text-[9px] text-[#9A8FB8]">
                   <span>Progress Metrics</span>
-                  <span className={isUnlocked ? "text-[#00C8FF] font-black" : ""}>
+                  <span className={isUnlocked ? "text-[#C9B8F0] font-semibold" : ""}>
                     {val.toFixed(0)} / {ach.targetValue}
                   </span>
                 </div>
-                <div className="h-2 w-full bg-slate-950 rounded-full overflow-hidden border border-slate-900">
-                  <div 
-                    className={`h-full transition-all duration-500 ${isUnlocked ? "bg-gradient-to-r from-[#00C8FF] to-[#7B2FBE]" : "bg-purple-800"}`}
+                <div className="h-2 w-full bg-[#15101F] rounded-full overflow-hidden border border-white/10">
+                  <div
+                    className="h-full transition-all duration-500 bg-gradient-to-r from-[#7C5FC0] to-[#C9B8F0]"
                     style={{ width: `${percent}%` }}
                   />
                 </div>
               </div>
 
               {/* Reward Reveal &Claim/Equip button action */}
-              <div className="mt-4 pt-3 border-t border-slate-900/40 flex flex-col items-stretch md:flex-row md:items-center justify-between gap-3 font-mono">
+              <div className="mt-4 pt-3 border-t border-white/10 flex flex-col items-stretch md:flex-row md:items-center justify-between gap-3">
                 <div className="flex items-center gap-1.5 text-left">
-                  <Award className="w-3.5 h-3.5 text-yellow-500" />
+                  <Award className="w-3.5 h-3.5 text-[#C9B8F0]" />
                   <div className="text-[9px]">
-                    <span className="text-yellow-400 font-bold block uppercase">REWARD COSMETIC BADGE:</span>
-                    <span className="text-white font-black uppercase font-mono">{ach.badgeTitle}</span>
+                    <span className="text-[#C9B8F0] font-monument tracking-[0.1em] block uppercase">REWARD COSMETIC BADGE:</span>
+                    <span className="text-[#EDE6FA] font-display font-semibold uppercase">{ach.badgeTitle}</span>
                   </div>
                 </div>
 
@@ -374,7 +373,7 @@ export function AchievementsView({ currentUser, workoutHistory, onRefreshProfile
                   {!isUnlocked ? (
                     <button
                       disabled
-                      className="px-3 h-8 text-[9px] font-mono font-black uppercase text-gray-500 bg-slate-950 border border-slate-900 rounded-lg flex items-center gap-1 cursor-not-allowed"
+                      className="px-3 h-8 text-[9px] font-monument tracking-[0.1em] uppercase text-[#5A5270] bg-[#15101F] border border-white/10 rounded-full flex items-center gap-1 cursor-not-allowed"
                       style={{ minHeight: "34px" }}
                     >
                       <Lock className="w-3 h-3" /> Locked
@@ -383,7 +382,7 @@ export function AchievementsView({ currentUser, workoutHistory, onRefreshProfile
                     <button
                       onClick={() => handleClaimBadge(ach)}
                       disabled={claimingId !== null}
-                      className="px-3.5 h-8 text-[9px] font-mono font-black uppercase text-white bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-500 hover:to-emerald-600 border border-emerald-500 rounded-lg flex items-center justify-center gap-1 transition-all cursor-pointer shadow-lg animate-pulse"
+                      className="px-3.5 h-8 text-[9px] font-monument tracking-[0.1em] uppercase text-[#241B3A] bg-[#B9A3E3] hover:bg-[#C7B5EC] rounded-full flex items-center justify-center gap-1 transition-all cursor-pointer"
                       style={{ minHeight: "34px" }}
                     >
                       Claim Badge
@@ -392,10 +391,10 @@ export function AchievementsView({ currentUser, workoutHistory, onRefreshProfile
                     <button
                       onClick={() => handleEquipTitle(ach.badgeId, ach.badgeTitle)}
                       disabled={equippingId !== null}
-                      className={`px-3.5 h-8 text-[9px] font-mono font-black uppercase rounded-lg border flex items-center justify-center gap-1 transition-all cursor-pointer ${
+                      className={`px-3.5 h-8 text-[9px] font-monument tracking-[0.1em] uppercase rounded-full border flex items-center justify-center gap-1 transition-all cursor-pointer ${
                         isEquipped
-                          ? "bg-amber-950/60 border-amber-500 text-yellow-300 shadow-[0_0_8px_rgba(245,158,11,0.30)]"
-                          : "bg-slate-900 hover:bg-slate-800 border-slate-700 text-slate-300"
+                          ? "frost border-[#C9B8F0]/40 text-[#C9B8F0]"
+                          : "frost border-white/10 text-[#C7BBE2] hover:text-[#EDE6FA]"
                       }`}
                       style={{ minHeight: "34px" }}
                     >
